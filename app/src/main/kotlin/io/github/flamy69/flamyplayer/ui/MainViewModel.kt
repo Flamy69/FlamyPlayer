@@ -39,6 +39,7 @@ class MainViewModel(app: Application) : AndroidViewModel(app) {
 
     val settings: Settings = (app as FlamyApp).settings
     val player = PlayerConnection(app, viewModelScope)
+    val video = VideoBrowser(app as FlamyApp, viewModelScope)
 
     private val _hasPermission = MutableStateFlow(MediaLibrary.hasPermission(app))
     val hasPermission: StateFlow<Boolean> = _hasPermission.asStateFlow()
@@ -84,11 +85,15 @@ class MainViewModel(app: Application) : AndroidViewModel(app) {
         app.contentResolver.registerContentObserver(
             MediaStore.Audio.Media.EXTERNAL_CONTENT_URI, true, mediaObserver,
         )
+        app.contentResolver.registerContentObserver(
+            MediaStore.Video.Media.EXTERNAL_CONTENT_URI, true, mediaObserver,
+        )
         refresh()
     }
 
     /** Re-reads the library; cheap enough to call whenever the app comes to the foreground. */
     fun refresh() {
+        video.refreshDevice()
         val granted = MediaLibrary.hasPermission(getApplication())
         _hasPermission.value = granted
         if (!granted || loadJob?.isActive == true) return

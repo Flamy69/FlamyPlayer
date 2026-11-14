@@ -4,4 +4,9 @@
     <style name="Theme.FlamyPlayer" parent="android:Theme.Material.Light.NoActionBar">
         <item name="android:windowBackground">@color/window_background</item>
     </style>
+
+    <!-- The video player is black in both the light and the dark theme. -->
+    <style name="Theme.FlamyPlayer.Video" parent="android:Theme.Material.NoActionBar">
+        <item name="android:windowBackground">@android:color/black</item>
+    </style>
 </resources>

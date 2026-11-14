@@ -77,6 +77,15 @@ dependencies {
 
     implementation(libs.media3.exoplayer)
     implementation(libs.media3.session)
+    implementation(libs.media3.ui)
+
+    // SMB2/3 client for playing video from Windows shares and NAS boxes, plus the RPC calls
+    // needed to list the shares of a server.
+    implementation(libs.smbj)
+    implementation(libs.smbj.rpc) {
+        // Media3 already brings the Android flavor of Guava; the JVM flavor must not replace it.
+        exclude(group = "com.google.guava", module = "guava")
+    }
 
     testImplementation(libs.junit)
 }

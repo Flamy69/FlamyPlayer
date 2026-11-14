@@ -59,6 +59,71 @@
     <string name="cd_speed">Playback speed</string>
     <string name="cd_open_folder">Open folder</string>
 
+    <string name="tab_video">Video</string>
+    <string name="action_retry">Try again</string>
+    <string name="action_save">Save</string>
+    <string name="action_cancel">Cancel</string>
+    <string name="action_refresh">Refresh</string>
+    <string name="action_edit">Edit</string>
+
+    <string name="video_section_network">Network</string>
+    <string name="video_section_device">On this device</string>
+    <string name="video_add_network">Add network folder</string>
+    <string name="video_add_network_hint">A shared folder on a computer or a NAS</string>
+    <string name="video_permission_text">FlamyPlayer needs permission to see the videos on this device.</string>
+    <string name="video_none_on_device">No videos were found on this device.</string>
+    <string name="video_folder_empty_title">No videos here</string>
+    <string name="video_folder_empty_text">This folder contains no videos and no subfolders.</string>
+    <string name="video_resume_at">Continue at %1$s</string>
+
+    <string name="network_title_add">Add network folder</string>
+    <string name="network_title_edit">Edit network folder</string>
+    <string name="network_address">Address</string>
+    <string name="network_address_hint">For example 192.168.1.10 or NAS/video</string>
+    <string name="network_address_error">Enter the name or IP address of the computer or NAS</string>
+    <string name="network_name">Name (optional)</string>
+    <string name="network_user">User name</string>
+    <string name="network_user_hint">Leave empty to sign in as a guest</string>
+    <string name="network_password">Password</string>
+    <string name="network_password_unchanged">Unchanged</string>
+    <string name="network_permission_text">FlamyPlayer needs permission to connect to devices on your local network.</string>
+    <string name="network_error_title">Could not open the folder</string>
+    <string name="network_error_unreachable">The computer or NAS cannot be reached. Check that the phone is on the same Wi-Fi and that the address is right.</string>
+    <string name="network_error_login">Signing in failed. Check the user name and the password.</string>
+    <string name="network_error_access">This account is not allowed to open the folder.</string>
+    <string name="network_error_not_found">The folder or file does not exist any more.</string>
+    <string name="network_error_other">The server reported an error.</string>
+    <string name="network_error_shares">The list of shared folders could not be loaded. Add the name of the shared folder to the address, for example NAS/video.</string>
+
+    <string name="video_audio_tracks">Audio</string>
+    <string name="video_no_audio_tracks">This video has no sound.</string>
+    <string name="video_subtitles">Subtitles</string>
+    <string name="video_subtitles_off">Off</string>
+    <string name="video_subtitle_open_file">Load from a file…</string>
+    <string name="video_subtitle_file_failed">The subtitle file could not be read.</string>
+    <string name="video_subtitle_size">Size</string>
+    <string name="video_subtitle_position">Position (bottom to top)</string>
+    <string name="video_subtitle_color">Color</string>
+    <string name="video_subtitle_background">Dark background</string>
+    <string name="video_subtitle_sample">This is what subtitles look like</string>
+    <string name="video_track_number">Track %1$d</string>
+    <string name="video_track_unsupported">%1$s (not supported)</string>
+    <string name="video_unsupported_sound">This phone cannot play the sound of this video (%1$s).</string>
+    <string name="video_unsupported_picture">This phone cannot play the picture of this video (%1$s).</string>
+    <string name="video_error_unsupported">This file format is not supported.</string>
+    <string name="video_error_generic">The video cannot be played (%1$s).</string>
+    <string name="video_lock_rotation">Lock rotation</string>
+    <string name="video_unlock_rotation">Unlock rotation</string>
+    <string name="video_rotate">Rotate</string>
+    <string name="video_resize">Picture size</string>
+    <string name="video_resize_fit">Fit</string>
+    <string name="video_resize_crop">Crop</string>
+    <string name="video_resize_stretch">Stretch</string>
+
+    <plurals name="video_count">
+        <item quantity="one">%d video</item>
+        <item quantity="other">%d videos</item>
+    </plurals>
     <plurals name="track_count">
         <item quantity="one">%d track</item>
         <item quantity="other">%d tracks</item>

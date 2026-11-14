@@ -19,11 +19,15 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.rounded.ArrowBack
 import androidx.compose.material.icons.automirrored.rounded.MenuBook
+import androidx.compose.material.icons.rounded.Add
 import androidx.compose.material.icons.rounded.Close
 import androidx.compose.material.icons.rounded.FolderOpen
 import androidx.compose.material.icons.rounded.LibraryMusic
 import androidx.compose.material.icons.rounded.Lock
+import androidx.compose.material.icons.rounded.Movie
+import androidx.compose.material.icons.rounded.Refresh
 import androidx.compose.material.icons.rounded.Search
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -51,12 +55,14 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.ImeAction
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.core.app.ActivityCompat
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import io.github.flamy69.flamyplayer.R
 import io.github.flamy69.flamyplayer.data.Book
 import io.github.flamy69.flamyplayer.data.MediaLibrary
 import io.github.flamy69.flamyplayer.data.Section
+import io.github.flamy69.flamyplayer.network.SmbServer
 
 @Composable
 fun FlamyPlayerApp(viewModel: MainViewModel) {
@@ -178,6 +184,28 @@ private fun HomeScreen(
     }
     BackHandler(enabled = searchActive, onBack = closeSearch)
 
+    val videoLocation by viewModel.video.location.collectAsStateWithLifecycle()
+    val servers by viewModel.video.settings.servers.collectAsStateWithLifecycle()
+    val insideVideoFolder = section == Section.VIDEO && videoLocation != VideoLocation.Home
+    BackHandler(enabled = insideVideoFolder) { viewModel.video.up() }
+
+    var addingServer by rememberSaveable { mutableStateOf(false) }
+    var editedServer by remember { mutableStateOf<SmbServer?>(null) }
+    if (addingServer || editedServer != null) {
+        val edited = editedServer
+        ServerDialog(
+            server = edited,
+            onSave = { name, address, user, password ->
+                viewModel.video.saveServer(edited, name, address, user, password)
+            },
+            onRemove = { edited?.let(viewModel.video::removeServer) },
+            onDismiss = {
+                addingServer = false
+                editedServer = null
+            },
+        )
+    }
+
     Scaffold(
         topBar = {
             TopAppBar(
@@ -186,16 +214,41 @@ private fun HomeScreen(
                         SearchField(query, onQueryChange = { query = it })
                     } else {
                         Text(
-                            stringResource(
-                                if (section == Section.MUSIC) R.string.tab_music else R.string.tab_audiobooks,
-                            ),
+                            text = when (val location = videoLocation.takeIf { section == Section.VIDEO }) {
+                                null -> stringResource(
+                                    if (section == Section.MUSIC) R.string.tab_music else R.string.tab_audiobooks,
+                                )
+                                VideoLocation.Home -> stringResource(R.string.tab_video)
+                                is VideoLocation.Device -> location.folder.substringAfterLast('/')
+                                is VideoLocation.Network -> location.path.lastOrNull()
+                                    ?: servers.firstOrNull { it.id == location.serverId }?.title.orEmpty()
+                            },
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis,
                         )
+                    }
+                },
+                navigationIcon = {
+                    if (insideVideoFolder) {
+                        IconButton(onClick = { viewModel.video.up() }) {
+                            Icon(Icons.AutoMirrored.Rounded.ArrowBack, stringResource(R.string.action_back))
+                        }
                     }
                 },
                 actions = {
                     if (searchActive) {
                         IconButton(onClick = closeSearch) {
                             Icon(Icons.Rounded.Close, stringResource(R.string.action_close))
+                        }
+                    } else if (section == Section.VIDEO) {
+                        when (videoLocation) {
+                            VideoLocation.Home -> IconButton(onClick = { addingServer = true }) {
+                                Icon(Icons.Rounded.Add, stringResource(R.string.video_add_network))
+                            }
+                            is VideoLocation.Network -> IconButton(onClick = viewModel.video::reload) {
+                                Icon(Icons.Rounded.Refresh, stringResource(R.string.action_refresh))
+                            }
+                            is VideoLocation.Device -> Unit
                         }
                     } else if (hasPermission) {
                         if (section == Section.MUSIC) {
@@ -226,6 +279,12 @@ private fun HomeScreen(
                         icon = { Icon(Icons.AutoMirrored.Rounded.MenuBook, contentDescription = null) },
                         label = { Text(stringResource(R.string.tab_audiobooks)) },
                     )
+                    NavigationBarItem(
+                        selected = section == Section.VIDEO,
+                        onClick = { onSectionChange(Section.VIDEO) },
+                        icon = { Icon(Icons.Rounded.Movie, contentDescription = null) },
+                        label = { Text(stringResource(R.string.tab_video)) },
+                    )
                 }
             }
         },
@@ -238,6 +297,13 @@ private fun HomeScreen(
             val tracks = musicTracks
             val bookList = books
             when {
+                // Video has its own sources and permissions; it does not need the audio library.
+                section == Section.VIDEO -> VideoScreen(
+                    browser = viewModel.video,
+                    onAddServer = { addingServer = true },
+                    onEditServer = { editedServer = it },
+                )
+
                 !hasPermission -> PermissionPrompt(onChanged = viewModel::refresh)
 
                 tracks == null || bookList == null -> CircularProgressIndicator(Modifier.align(Alignment.Center))

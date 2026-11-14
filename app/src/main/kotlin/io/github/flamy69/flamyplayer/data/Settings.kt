@@ -8,7 +8,7 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 
-enum class Section { MUSIC, BOOKS }
+enum class Section { MUSIC, BOOKS, VIDEO }
 
 /** Everything the app remembers between launches. Small enough for plain SharedPreferences. */
 class Settings(context: Context) {
@@ -35,9 +35,11 @@ class Settings(context: Context) {
     val bookProgress: StateFlow<Map<String, BookProgress>> = _bookProgress.asStateFlow()
 
     var lastSection: Section
-        get() = if (prefs.getString(KEY_SECTION, null) == Section.BOOKS.name) Section.BOOKS else Section.MUSIC
+        get() = prefs.getString(KEY_SECTION, null).let { name -> Section.entries.firstOrNull { it.name == name } }
+            ?: Section.MUSIC
         set(value) = prefs.edit { putString(KEY_SECTION, value.name) }
 
+    /** The folders picked for music or audiobooks; the video section has no folder selection. */
     fun folders(section: Section): StateFlow<Set<String>> =
         if (section == Section.MUSIC) musicFolders else bookFolders
 

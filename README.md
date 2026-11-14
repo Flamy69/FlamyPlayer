@@ -1,13 +1,16 @@
 # FlamyPlayer
 
-A small, fast, folder-based audio player for Android. It does two things:
+A small, fast, folder-based media player for Android. It does three things:
 
 - **Music** – point it at a folder (for example your whole `Music` directory full of albums and
   discographies) and everything inside becomes one big playlist. Hit shuffle and get on with your day.
 - **Audiobooks** – point it at the folder of a book and it plays the files in order, start to
   finish, and remembers where you stopped.
+- **Video** – plays the videos on the phone and, over Wi-Fi, the ones in shared folders of a
+  Windows PC or a NAS, with subtitles you can restyle and move.
 
-No accounts, no ads, no network access. The app does not even request the internet permission.
+No accounts, no ads, no tracking. The only network connections the app ever makes are to the
+network folders you add yourself.
 
 ## Features
 
@@ -21,6 +24,13 @@ No accounts, no ads, no network access. The app does not even request the intern
 - Headset and Bluetooth buttons: play, pause, next, previous
 - Pauses when headphones are unplugged and handles audio focus (calls, navigation prompts)
 - Skips files the device cannot decode instead of stopping the playlist
+- Video from the phone and from network folders (SMB 2/3: Windows shares, NAS), played straight
+  from the share without copying
+- Subtitles from the video file or from `.srt`, `.ass` and `.vtt` files next to it, with
+  adjustable size, color and position; old Windows code pages are detected, so accented
+  letters survive
+- Rotation lock and manual rotation, brightness and volume by swiping, double tap to skip
+  10 seconds, choice of audio track, resume where you stopped
 - Light and dark theme, English and Czech
 
 ## Download
@@ -39,6 +49,24 @@ Requires Android 8.0 or newer.
 3. **Audiobooks**: tap the folder icon and tick the folder of each book. Every ticked folder is one
    book; folders like `CD1`, `CD2` inside it are played in order. Tap a book to see its chapters,
    or the play button to continue where you left off.
+4. **Video**: folders of the phone that contain videos are listed automatically. For a shared
+   folder, tap **+** and enter the address of the computer or NAS, for example `192.168.1.10` or
+   `NAS/video`, plus user name and password if the share needs them. Tap a video to play it; the
+   other videos of the folder follow.
+
+In the video player:
+
+| Gesture or button | What it does |
+| --- | --- |
+| Tap | Show or hide the controls |
+| Double tap on the left / right half | Back / forward 10 seconds |
+| Swipe up or down on the left half | Brightness |
+| Swipe up or down on the right half | Volume |
+| Subtitles button | Pick the subtitles, load them from a file, set size, position and color |
+| Audio button | Pick the audio track |
+| Rotation lock | Keep the current orientation however the phone is held |
+| Rotate | Switch between landscape and portrait |
+| Picture size | Fit, crop to fill the screen, or stretch |
 
 ## Supported formats
 
@@ -56,6 +84,12 @@ with the decoders built into Android:
 
 Other formats play if the device has a decoder for them. ALAC and WMA usually do not.
 
+Video works the same way: MKV, MP4/MOV, WebM, AVI, MPEG-TS and FLV files are read by ExoPlayer and
+decoded by the phone. H.264 plays everywhere; H.265, VP9 and AV1 on any reasonably recent phone.
+Many phones have no decoder for AC3 or DTS sound: such a video plays silently, and the app says
+so. Subtitles inside the file (text or picture based) and separate `.srt`, `.ass`, `.ssa` and
+`.vtt` files are supported.
+
 ## Why it is fast
 
 FlamyPlayer never scans your storage or opens files to read their tags. Android already maintains
@@ -71,6 +105,11 @@ Two consequences worth knowing:
 
 Playlists are handed to the playback service in-process, so starting a 10 000 track shuffle does
 not have to squeeze thousands of items through a Binder transaction.
+
+Videos on the phone come from the same index. Network folders are listed on demand, one folder
+at a time, over a connection that stays open between requests; nothing is scanned or indexed in
+advance. During playback the file is read in requests of up to 1 MB, which keeps a Wi-Fi link
+busy with data instead of round trips.
 
 ## Building
 
@@ -123,23 +162,29 @@ encoded), `KEYSTORE_PASSWORD`, `KEY_ALIAS` and `KEY_PASSWORD`.
 
 ```
 app/src/main/kotlin/io/github/flamy69/flamyplayer/
-├── data/        library query, folder tree, natural ordering, settings
+├── data/        library queries, folder tree, natural ordering, settings
+├── network/     SMB client and the data source that lets the player read from a share
 ├── playback/    media session service and the UI's connection to it
-└── ui/          Jetpack Compose screens
+├── ui/          Jetpack Compose screens
+└── video/       the video player
 ```
 
-Written in Kotlin with Jetpack Compose (Material 3) and Media3. There is no database and no
-dependency injection framework; the whole app is a few small files.
+Written in Kotlin with Jetpack Compose (Material 3) and Media3; network folders are accessed
+with [smbj](https://github.com/hierynomus/smbj). There is no database and no dependency
+injection framework; the whole app is a few small files.
 
 ## Permissions
 
 | Permission | Why |
 | --- | --- |
 | `READ_MEDIA_AUDIO` (`READ_EXTERNAL_STORAGE` before Android 13) | Reading your audio files |
+| `READ_MEDIA_VIDEO`, `READ_MEDIA_VISUAL_USER_SELECTED` | Reading your videos; asked for in the video section only |
+| `INTERNET` | Connecting to the network folders you add; the app contacts nothing else |
+| `ACCESS_LOCAL_NETWORK` | The same, on Android 17 and newer, where reaching devices on the local network needs your consent |
 | `POST_NOTIFICATIONS` | Showing the playback notification |
 | `FOREGROUND_SERVICE`, `FOREGROUND_SERVICE_MEDIA_PLAYBACK` | Playing while the app is in the background |
 | `WAKE_LOCK` | Keeping playback going with the screen off |
-| `ACCESS_NETWORK_STATE` | Added by the Media3 library; the app itself has no internet permission |
+| `ACCESS_NETWORK_STATE` | Added by the Media3 library |
 
 ## License
 

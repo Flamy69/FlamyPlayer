@@ -57,6 +57,73 @@
     <string name="cd_speed">Rychlost přehrávání</string>
     <string name="cd_open_folder">Otevřít složku</string>
 
+    <string name="tab_video">Video</string>
+    <string name="action_retry">Zkusit znovu</string>
+    <string name="action_save">Uložit</string>
+    <string name="action_cancel">Zrušit</string>
+    <string name="action_refresh">Obnovit</string>
+    <string name="action_edit">Upravit</string>
+
+    <string name="video_section_network">Síť</string>
+    <string name="video_section_device">V tomto zařízení</string>
+    <string name="video_add_network">Přidat síťovou složku</string>
+    <string name="video_add_network_hint">Sdílená složka na počítači nebo NASu</string>
+    <string name="video_permission_text">FlamyPlayer potřebuje oprávnění, aby viděl videa v tomto zařízení.</string>
+    <string name="video_none_on_device">V tomto zařízení nebyla nalezena žádná videa.</string>
+    <string name="video_folder_empty_title">Žádná videa</string>
+    <string name="video_folder_empty_text">Tato složka neobsahuje žádná videa ani podsložky.</string>
+    <string name="video_resume_at">Pokračovat od %1$s</string>
+
+    <string name="network_title_add">Přidat síťovou složku</string>
+    <string name="network_title_edit">Upravit síťovou složku</string>
+    <string name="network_address">Adresa</string>
+    <string name="network_address_hint">Například 192.168.1.10 nebo NAS/video</string>
+    <string name="network_address_error">Zadejte název nebo IP adresu počítače či NASu</string>
+    <string name="network_name">Název (nepovinný)</string>
+    <string name="network_user">Uživatelské jméno</string>
+    <string name="network_user_hint">Nechte prázdné pro přihlášení jako host</string>
+    <string name="network_password">Heslo</string>
+    <string name="network_password_unchanged">Beze změny</string>
+    <string name="network_permission_text">FlamyPlayer potřebuje oprávnění připojovat se k zařízením v místní síti.</string>
+    <string name="network_error_title">Složku se nepodařilo otevřít</string>
+    <string name="network_error_unreachable">Počítač nebo NAS není dostupný. Zkontrolujte, že je telefon na stejné Wi-Fi a že je adresa správně.</string>
+    <string name="network_error_login">Přihlášení se nezdařilo. Zkontrolujte uživatelské jméno a heslo.</string>
+    <string name="network_error_access">Tento účet nemá do složky přístup.</string>
+    <string name="network_error_not_found">Složka nebo soubor už neexistuje.</string>
+    <string name="network_error_other">Server ohlásil chybu.</string>
+    <string name="network_error_shares">Seznam sdílených složek se nepodařilo načíst. Doplňte do adresy název sdílené složky, například NAS/video.</string>
+
+    <string name="video_audio_tracks">Zvuk</string>
+    <string name="video_no_audio_tracks">Toto video nemá zvuk.</string>
+    <string name="video_subtitles">Titulky</string>
+    <string name="video_subtitles_off">Vypnuto</string>
+    <string name="video_subtitle_open_file">Načíst ze souboru…</string>
+    <string name="video_subtitle_file_failed">Soubor s titulky se nepodařilo načíst.</string>
+    <string name="video_subtitle_size">Velikost</string>
+    <string name="video_subtitle_position">Umístění (zdola nahoru)</string>
+    <string name="video_subtitle_color">Barva</string>
+    <string name="video_subtitle_background">Tmavé pozadí</string>
+    <string name="video_subtitle_sample">Takhle vypadají titulky</string>
+    <string name="video_track_number">Stopa %1$d</string>
+    <string name="video_track_unsupported">%1$s (nepodporováno)</string>
+    <string name="video_unsupported_sound">Zvuk tohoto videa (%1$s) tento telefon neumí přehrát.</string>
+    <string name="video_unsupported_picture">Obraz tohoto videa (%1$s) tento telefon neumí přehrát.</string>
+    <string name="video_error_unsupported">Tento formát souboru není podporován.</string>
+    <string name="video_error_generic">Video nelze přehrát (%1$s).</string>
+    <string name="video_lock_rotation">Zamknout otáčení</string>
+    <string name="video_unlock_rotation">Odemknout otáčení</string>
+    <string name="video_rotate">Otočit</string>
+    <string name="video_resize">Velikost obrazu</string>
+    <string name="video_resize_fit">Přizpůsobit</string>
+    <string name="video_resize_crop">Oříznout</string>
+    <string name="video_resize_stretch">Roztáhnout</string>
+
+    <plurals name="video_count">
+        <item quantity="one">%d video</item>
+        <item quantity="few">%d videa</item>
+        <item quantity="many">%d videa</item>
+        <item quantity="other">%d videí</item>
+    </plurals>
     <plurals name="track_count">
         <item quantity="one">%d skladba</item>
         <item quantity="few">%d skladby</item>
