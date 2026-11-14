@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8"?>
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="24dp"
+    android:height="24dp"
+    android:viewportWidth="24"
+    android:viewportHeight="24">
+    <!-- The launcher flame, scaled from its 108 unit canvas down to the status bar size. -->
+    <group
+        android:scaleX="0.3333"
+        android:scaleY="0.3333"
+        android:translateX="-6"
+        android:translateY="-5">
+        <path
+            android:fillColor="#FFFFFF"
+            android:fillType="evenOdd"
+            android:pathData="M56,18C58,30 74,40 74,60C74,73 65,84 54,84C43,84 34,73 34,60C34,50 39,43 43,37C44,44 47,48 51,49C49,38 51,26 56,18ZM49,54L63,63.5L49,73Z" />
+    </group>
+</vector>

@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="utf-8"?>
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:aapt="http://schemas.android.com/aapt"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="108"
+    android:viewportHeight="108">
+    <!-- A flame with a play triangle cut out of it. -->
+    <path
+        android:fillType="evenOdd"
+        android:pathData="M56,18C58,30 74,40 74,60C74,73 65,84 54,84C43,84 34,73 34,60C34,50 39,43 43,37C44,44 47,48 51,49C49,38 51,26 56,18ZM49,54L63,63.5L49,73Z">
+        <aapt:attr name="android:fillColor">
+            <gradient
+                android:endX="54"
+                android:endY="84"
+                android:startX="54"
+                android:startY="18"
+                android:type="linear">
+                <item
+                    android:color="#FFC53D"
+                    android:offset="0" />
+                <item
+                    android:color="#FF4B14"
+                    android:offset="1" />
+            </gradient>
+        </aapt:attr>
+    </path>
+</vector>

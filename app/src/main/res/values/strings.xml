@@ -1,0 +1,70 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name" translatable="false">FlamyPlayer</string>
+
+    <string name="tab_music">Music</string>
+    <string name="tab_audiobooks">Audiobooks</string>
+
+    <string name="action_choose_folders">Choose folders</string>
+    <string name="action_shuffle">Shuffle</string>
+    <string name="action_play_in_order">Play in order</string>
+    <string name="action_search">Search</string>
+    <string name="action_close">Close</string>
+    <string name="action_back">Back</string>
+    <string name="action_done">Done</string>
+    <string name="action_clear_all">Clear all</string>
+    <string name="action_remove">Remove</string>
+    <string name="search_hint">Search tracks</string>
+    <string name="search_no_results">Nothing matches “%1$s”</string>
+
+    <string name="permission_title">Access to your audio files</string>
+    <string name="permission_text">FlamyPlayer needs permission to read the audio files on this device. Nothing ever leaves your phone.</string>
+    <string name="permission_button">Allow access</string>
+
+    <string name="music_empty_title">No music folders yet</string>
+    <string name="music_empty_text">Pick a folder with your music. Everything inside it, including all albums in subfolders, ends up in one big playlist.</string>
+    <string name="music_no_tracks_title">No tracks found</string>
+    <string name="music_no_tracks_text">The selected folders do not contain any audio files.</string>
+
+    <string name="books_empty_title">No audiobooks yet</string>
+    <string name="books_empty_text">Pick the folder of an audiobook. FlamyPlayer plays it from start to finish and remembers where you stopped.</string>
+    <string name="book_resume">Continue listening</string>
+    <string name="book_start">Start listening</string>
+    <string name="book_no_files">No audio files in this folder</string>
+    <string name="book_progress">Chapter %1$d of %2$d · %3$d %%</string>
+    <string name="book_not_started">Not started yet</string>
+
+    <string name="picker_title_music">Music folders</string>
+    <string name="picker_title_books">Audiobook folders</string>
+    <string name="picker_hint_music">Tick one or more folders. Everything inside them, subfolders included, goes into one playlist.</string>
+    <string name="picker_hint_books">Tick the folder of each audiobook. Every ticked folder is one book.</string>
+    <string name="picker_this_folder">This whole folder</string>
+    <string name="picker_no_audio">No audio files were found on this device.</string>
+    <string name="picker_missing">No audio files here any more</string>
+    <string name="picker_all_storage">All storage</string>
+    <string name="picker_internal_storage">Internal storage</string>
+
+    <string name="duration_hours_minutes">%1$d h %2$d min</string>
+    <string name="duration_minutes">%1$d min</string>
+    <string name="speed_value">%1$s×</string>
+
+    <string name="cd_play">Play</string>
+    <string name="cd_pause">Pause</string>
+    <string name="cd_next">Next</string>
+    <string name="cd_previous">Previous</string>
+    <string name="cd_shuffle">Shuffle</string>
+    <string name="cd_repeat">Repeat</string>
+    <string name="cd_rewind">Back 10 seconds</string>
+    <string name="cd_forward">Forward 30 seconds</string>
+    <string name="cd_speed">Playback speed</string>
+    <string name="cd_open_folder">Open folder</string>
+
+    <plurals name="track_count">
+        <item quantity="one">%d track</item>
+        <item quantity="other">%d tracks</item>
+    </plurals>
+    <plurals name="chapter_count">
+        <item quantity="one">%d chapter</item>
+        <item quantity="other">%d chapters</item>
+    </plurals>
+</resources>

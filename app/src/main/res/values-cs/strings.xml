@@ -1,0 +1,72 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="tab_music">Hudba</string>
+    <string name="tab_audiobooks">Audioknihy</string>
+
+    <string name="action_choose_folders">Vybrat složky</string>
+    <string name="action_shuffle">Náhodně</string>
+    <string name="action_play_in_order">Přehrát popořadě</string>
+    <string name="action_search">Hledat</string>
+    <string name="action_close">Zavřít</string>
+    <string name="action_back">Zpět</string>
+    <string name="action_done">Hotovo</string>
+    <string name="action_clear_all">Zrušit vše</string>
+    <string name="action_remove">Odebrat</string>
+    <string name="search_hint">Hledat skladby</string>
+    <string name="search_no_results">Dotazu „%1$s“ nic neodpovídá</string>
+
+    <string name="permission_title">Přístup ke zvukovým souborům</string>
+    <string name="permission_text">FlamyPlayer potřebuje oprávnění číst zvukové soubory v tomto zařízení. Nic z telefonu nikam neodesílá.</string>
+    <string name="permission_button">Povolit přístup</string>
+
+    <string name="music_empty_title">Zatím žádné složky s hudbou</string>
+    <string name="music_empty_text">Vyberte složku s hudbou. Vše, co v ní je, včetně alb v podsložkách, se načte do jednoho velkého playlistu.</string>
+    <string name="music_no_tracks_title">Žádné skladby</string>
+    <string name="music_no_tracks_text">Ve vybraných složkách nejsou žádné zvukové soubory.</string>
+
+    <string name="books_empty_title">Zatím žádné audioknihy</string>
+    <string name="books_empty_text">Vyberte složku s audioknihou. FlamyPlayer ji přehraje od začátku do konce a pamatuje si, kde jste skončili.</string>
+    <string name="book_resume">Pokračovat v poslechu</string>
+    <string name="book_start">Začít poslouchat</string>
+    <string name="book_no_files">V této složce nejsou žádné zvukové soubory</string>
+    <string name="book_progress">Kapitola %1$d z %2$d · %3$d %%</string>
+    <string name="book_not_started">Zatím nezačato</string>
+
+    <string name="picker_title_music">Složky s hudbou</string>
+    <string name="picker_title_books">Složky s audioknihami</string>
+    <string name="picker_hint_music">Zaškrtněte jednu nebo více složek. Vše, co obsahují, včetně podsložek, se načte do jednoho playlistu.</string>
+    <string name="picker_hint_books">Zaškrtněte složku každé audioknihy. Každá zaškrtnutá složka je jedna kniha.</string>
+    <string name="picker_this_folder">Celá tato složka</string>
+    <string name="picker_no_audio">V tomto zařízení nebyly nalezeny žádné zvukové soubory.</string>
+    <string name="picker_missing">Už zde nejsou žádné zvukové soubory</string>
+    <string name="picker_all_storage">Celé úložiště</string>
+    <string name="picker_internal_storage">Interní úložiště</string>
+
+    <string name="duration_hours_minutes">%1$d h %2$d min</string>
+    <string name="duration_minutes">%1$d min</string>
+    <string name="speed_value">%1$s×</string>
+
+    <string name="cd_play">Přehrát</string>
+    <string name="cd_pause">Pozastavit</string>
+    <string name="cd_next">Další</string>
+    <string name="cd_previous">Předchozí</string>
+    <string name="cd_shuffle">Náhodné přehrávání</string>
+    <string name="cd_repeat">Opakování</string>
+    <string name="cd_rewind">Zpět o 10 sekund</string>
+    <string name="cd_forward">Vpřed o 30 sekund</string>
+    <string name="cd_speed">Rychlost přehrávání</string>
+    <string name="cd_open_folder">Otevřít složku</string>
+
+    <plurals name="track_count">
+        <item quantity="one">%d skladba</item>
+        <item quantity="few">%d skladby</item>
+        <item quantity="many">%d skladby</item>
+        <item quantity="other">%d skladeb</item>
+    </plurals>
+    <plurals name="chapter_count">
+        <item quantity="one">%d kapitola</item>
+        <item quantity="few">%d kapitoly</item>
+        <item quantity="many">%d kapitoly</item>
+        <item quantity="other">%d kapitol</item>
+    </plurals>
+</resources>
