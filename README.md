@@ -140,3 +140,7 @@ dependency injection framework; the whole app is a few small files.
 | `FOREGROUND_SERVICE`, `FOREGROUND_SERVICE_MEDIA_PLAYBACK` | Playing while the app is in the background |
 | `WAKE_LOCK` | Keeping playback going with the screen off |
 | `ACCESS_NETWORK_STATE` | Added by the Media3 library; the app itself has no internet permission |
+
+## License
+
+[MIT](LICENSE)
