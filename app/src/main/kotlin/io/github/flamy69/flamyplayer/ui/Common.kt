@@ -143,6 +143,7 @@ fun EmptyState(
     modifier: Modifier = Modifier,
     buttonText: String? = null,
     onButtonClick: () -> Unit = {},
+    detail: String? = null,
 ) {
     Column(
         modifier = modifier
@@ -169,6 +170,15 @@ fun EmptyState(
         if (buttonText != null) {
             Spacer(Modifier.height(24.dp))
             Button(onClick = onButtonClick) { Text(buttonText) }
+        }
+        if (detail != null) {
+            Spacer(Modifier.height(24.dp))
+            Text(
+                text = detail,
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f),
+                textAlign = TextAlign.Center,
+            )
         }
     }
 }

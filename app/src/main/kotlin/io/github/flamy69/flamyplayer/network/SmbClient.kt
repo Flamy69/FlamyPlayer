@@ -20,6 +20,7 @@ import com.rapid7.client.dcerpc.transport.SMBTransportFactories
 import java.io.ByteArrayOutputStream
 import java.io.Closeable
 import java.io.IOException
+import java.net.UnknownHostException
 import java.util.EnumSet
 import java.util.concurrent.TimeUnit
 
@@ -30,8 +31,12 @@ import java.util.concurrent.TimeUnit
  * All methods block; call them from a background thread.
  *
  * @param password turns the stored secret of a server into its password
+ * @param resolveHost turns the host of a server into an address a socket can connect to
  */
-class SmbClient(private val password: (SmbServer) -> String) {
+class SmbClient(
+    private val password: (SmbServer) -> String,
+    private val resolveHost: (String) -> String,
+) {
 
     private val client: SMBClient by lazy {
         SMBClient(
@@ -182,7 +187,7 @@ class SmbClient(private val password: (SmbServer) -> String) {
     }
 
     private fun connect(server: SmbServer): Link {
-        val connection = client.connect(server.host)
+        val connection = client.connect(resolveHost(server.host))
         try {
             val (domain, user) = SmbAddress.splitUser(server.user)
             val session = if (user.isEmpty()) {
@@ -254,6 +259,8 @@ class SmbClient(private val password: (SmbServer) -> String) {
 
                     else -> SmbException.Reason.OTHER
                 }
+            } else if (generateSequence(e) { it.cause }.take(8).any { it is UnknownHostException }) {
+                SmbException.Reason.UNKNOWN_HOST
             } else if (generateSequence(e) { it.cause }.take(8).any { it is IOException }) {
                 // Unknown host, refused or timed out connection, a link that broke mid-way.
                 SmbException.Reason.UNREACHABLE

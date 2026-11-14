@@ -26,6 +26,8 @@ network folders you add yourself.
 - Skips files the device cannot decode instead of stopping the playlist
 - Video from the phone and from network folders (SMB 2/3: Windows shares, NAS), played straight
   from the share without copying
+- Computers and NAS boxes on your Wi-Fi are found automatically, and Windows computer names
+  work as addresses
 - Subtitles from the video file or from `.srt`, `.ass` and `.vtt` files next to it, with
   adjustable size, color and position; old Windows code pages are detected, so accented
   letters survive
@@ -49,10 +51,11 @@ Requires Android 8.0 or newer.
 3. **Audiobooks**: tap the folder icon and tick the folder of each book. Every ticked folder is one
    book; folders like `CD1`, `CD2` inside it are played in order. Tap a book to see its chapters,
    or the play button to continue where you left off.
-4. **Video**: folders of the phone that contain videos are listed automatically. For a shared
-   folder, tap **+** and enter the address of the computer or NAS, for example `192.168.1.10` or
-   `NAS/video`, plus user name and password if the share needs them. Tap a video to play it; the
-   other videos of the folder follow.
+4. **Video**: folders of the phone that contain videos are listed automatically, and so are the
+   computers and NAS boxes on your Wi-Fi that share folders. Tap one of them, or tap **+** and
+   enter an address yourself, for example `192.168.1.10`, `NAS/video` or `\\PC\Films`; add the
+   user name and password if the share needs them. Tap a video to play it; the other videos of
+   the folder follow.
 
 In the video player:
 
@@ -110,6 +113,10 @@ Videos on the phone come from the same index. Network folders are listed on dema
 at a time, over a connection that stays open between requests; nothing is scanned or indexed in
 advance. During playback the file is read in requests of up to 1 MB, which keeps a Wi-Fi link
 busy with data instead of round trips.
+
+Finding the machines on your network takes about two seconds: the app tries the file sharing
+port of every address of the phone's own Wi-Fi network (at most 254 of them) in parallel and
+asks the ones that answer for their name. It never looks beyond the local network.
 
 ## Building
 
@@ -184,7 +191,7 @@ injection framework; the whole app is a few small files.
 | `POST_NOTIFICATIONS` | Showing the playback notification |
 | `FOREGROUND_SERVICE`, `FOREGROUND_SERVICE_MEDIA_PLAYBACK` | Playing while the app is in the background |
 | `WAKE_LOCK` | Keeping playback going with the screen off |
-| `ACCESS_NETWORK_STATE` | Added by the Media3 library |
+| `ACCESS_NETWORK_STATE` | Finding out which Wi-Fi network the phone is on, to look for shared folders there |
 
 ## License
 

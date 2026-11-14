@@ -56,6 +56,8 @@
     <string name="cd_forward">Vpřed o 30 sekund</string>
     <string name="cd_speed">Rychlost přehrávání</string>
     <string name="cd_open_folder">Otevřít složku</string>
+    <string name="cd_show_password">Zobrazit heslo</string>
+    <string name="cd_hide_password">Skrýt heslo</string>
 
     <string name="tab_video">Video</string>
     <string name="action_retry">Zkusit znovu</string>
@@ -67,7 +69,11 @@
     <string name="video_section_network">Síť</string>
     <string name="video_section_device">V tomto zařízení</string>
     <string name="video_add_network">Přidat síťovou složku</string>
-    <string name="video_add_network_hint">Sdílená složka na počítači nebo NASu</string>
+    <string name="video_add_network_hint">Zadat adresu počítače nebo NASu ručně</string>
+    <string name="video_find_devices">Prohledat síť</string>
+    <string name="video_found_searching">Hledám počítače a NASy ve vaší síti…</string>
+    <string name="video_found_none">Ve vaší síti nebyl nalezen žádný počítač ani NAS se sdílenými složkami.</string>
+    <string name="video_found_no_wifi">Připojte telefon k Wi-Fi, aby bylo možné najít počítače a NASy ve vaší síti.</string>
     <string name="video_permission_text">FlamyPlayer potřebuje oprávnění, aby viděl videa v tomto zařízení.</string>
     <string name="video_none_on_device">V tomto zařízení nebyla nalezena žádná videa.</string>
     <string name="video_folder_empty_title">Žádná videa</string>
@@ -77,7 +83,7 @@
     <string name="network_title_add">Přidat síťovou složku</string>
     <string name="network_title_edit">Upravit síťovou složku</string>
     <string name="network_address">Adresa</string>
-    <string name="network_address_hint">Například 192.168.1.10 nebo NAS/video</string>
+    <string name="network_address_hint">Název nebo IP adresa, případně i se složkou: 192.168.1.10 nebo NAS/video</string>
     <string name="network_address_error">Zadejte název nebo IP adresu počítače či NASu</string>
     <string name="network_name">Název (nepovinný)</string>
     <string name="network_user">Uživatelské jméno</string>
@@ -86,7 +92,8 @@
     <string name="network_password_unchanged">Beze změny</string>
     <string name="network_permission_text">FlamyPlayer potřebuje oprávnění připojovat se k zařízením v místní síti.</string>
     <string name="network_error_title">Složku se nepodařilo otevřít</string>
-    <string name="network_error_unreachable">Počítač nebo NAS není dostupný. Zkontrolujte, že je telefon na stejné Wi-Fi a že je adresa správně.</string>
+    <string name="network_error_unknown_host">Zařízení s tímto názvem se v síti nepodařilo najít. Zkontrolujte název, nebo místo něj zadejte IP adresu zařízení.</string>
+    <string name="network_error_unreachable">Počítač nebo NAS neodpovídá. Zkontrolujte, že je zapnutý, že je telefon na stejné Wi-Fi a že jeho firewall povoluje sdílení souborů.</string>
     <string name="network_error_login">Přihlášení se nezdařilo. Zkontrolujte uživatelské jméno a heslo.</string>
     <string name="network_error_access">Tento účet nemá do složky přístup.</string>
     <string name="network_error_not_found">Složka nebo soubor už neexistuje.</string>

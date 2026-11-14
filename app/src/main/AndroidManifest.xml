@@ -17,6 +17,8 @@
          Android 17 additionally asks the user before the app may reach the local network. -->
     <uses-permission android:name="android.permission.INTERNET" />
     <uses-permission android:name="android.permission.ACCESS_LOCAL_NETWORK" />
+    <!-- Tells which network the phone's Wi-Fi is on, to look for shared folders there. -->
+    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
 
     <application
         android:name=".FlamyApp"

@@ -60,5 +60,22 @@ object SmbAddress {
 class SmbException(val reason: Reason, cause: Throwable? = null) :
     IOException("SMB: $reason" + (cause?.message?.let { " ($it)" } ?: ""), cause) {
 
-    enum class Reason { UNREACHABLE, LOGIN_FAILED, ACCESS_DENIED, NOT_FOUND, OTHER }
+    enum class Reason {
+        /** Nothing on the network answers to the name that was entered. */
+        UNKNOWN_HOST,
+
+        /** The machine is known, but does not accept the connection. */
+        UNREACHABLE,
+        LOGIN_FAILED,
+        ACCESS_DENIED,
+        NOT_FOUND,
+        OTHER,
+    }
+
+    /** The underlying technical error in one line, for telling apart causes that look alike. */
+    val detail: String
+        get() {
+            val root = generateSequence(cause) { it.cause }.take(8).lastOrNull() ?: return reason.name
+            return listOfNotNull(root.javaClass.simpleName.ifEmpty { null }, root.message).joinToString(": ")
+        }
 }

@@ -15,6 +15,7 @@ import io.github.flamy69.flamyplayer.data.VideoFolder
 import io.github.flamy69.flamyplayer.data.VideoLibrary
 import io.github.flamy69.flamyplayer.data.VideoSettings
 import io.github.flamy69.flamyplayer.data.groupVideosByFolder
+import io.github.flamy69.flamyplayer.network.FoundDevice
 import io.github.flamy69.flamyplayer.network.SecretStore
 import io.github.flamy69.flamyplayer.network.SmbAddress
 import io.github.flamy69.flamyplayer.network.SmbEntry
@@ -52,7 +53,18 @@ sealed interface VideoLocation {
 sealed interface NetworkListing {
     data object Loading : NetworkListing
     class Ready(val entries: List<SmbEntry>) : NetworkListing
-    class Failed(val reason: SmbException.Reason) : NetworkListing
+    class Failed(val reason: SmbException.Reason, val detail: String) : NetworkListing
+}
+
+/** The search for computers and NAS boxes on the local network. */
+sealed interface Discovery {
+    /** Not searched yet. */
+    data object Idle : Discovery
+    data object Searching : Discovery
+
+    /** The phone is not on Wi-Fi, so there is no local network to search. */
+    data object NoWifi : Discovery
+    class Done(val devices: List<FoundDevice>) : Discovery
 }
 
 /** Access to devices on the local network needs the user's consent from Android 17 on. */
@@ -86,6 +98,13 @@ class VideoBrowser(private val app: FlamyApp, private val scope: CoroutineScope)
     private val _listing = MutableStateFlow<NetworkListing>(NetworkListing.Loading)
     val listing: StateFlow<NetworkListing> = _listing.asStateFlow()
 
+    private val _discovery = MutableStateFlow<Discovery>(Discovery.Idle)
+
+    /** Machines with shared folders that were found on the local network. */
+    val discovery: StateFlow<Discovery> = _discovery.asStateFlow()
+
+    private var discoveryJob: Job? = null
+
     /** Folders seen in this session; going back up shows them without asking the server again. */
     private val cache = HashMap<VideoLocation.Network, List<SmbEntry>>()
 
@@ -101,6 +120,27 @@ class VideoBrowser(private val app: FlamyApp, private val scope: CoroutineScope)
         if (!deviceWanted || !granted || deviceJob?.isActive == true) return
         deviceJob = scope.launch {
             _folders.value = withContext(Dispatchers.IO) { groupVideosByFolder(VideoLibrary.load(app)) }
+        }
+    }
+
+    /** Searches the local network; once per session unless [again] is set. */
+    fun discover(again: Boolean = false) {
+        if (discoveryJob?.isActive == true) return
+        if (!again && _discovery.value != Discovery.Idle) return
+        _discovery.value = Discovery.Searching
+        discoveryJob = scope.launch {
+            val found = try {
+                app.localNetwork.scan()
+            } catch (e: CancellationException) {
+                throw e
+            } catch (_: Exception) {
+                emptyList()
+            }
+            _discovery.value = if (found == null) {
+                Discovery.NoWifi
+            } else {
+                Discovery.Done(found.sortedWith(compareBy(NaturalOrder) { it.host }))
+            }
         }
     }
 
@@ -141,8 +181,9 @@ class VideoBrowser(private val app: FlamyApp, private val scope: CoroutineScope)
     }
 
     /**
-     * Saves a new or edited network location. Returns `false` if [address] cannot be understood.
-     * An empty [password] keeps the stored one, unless the user name was removed as well.
+     * Saves a new or edited network location and, if it is new, opens it. Returns `false` if
+     * [address] cannot be understood. An empty [password] keeps the stored one, unless the user
+     * name was removed as well.
      */
     fun saveServer(existing: SmbServer?, name: String, address: String, user: String, password: String): Boolean {
         val (host, root) = SmbAddress.parse(address) ?: return false
@@ -159,6 +200,8 @@ class VideoBrowser(private val app: FlamyApp, private val scope: CoroutineScope)
             }
             settings.saveServer(server)
             forget(id)
+            // Shows right away whether the address and the password are right.
+            if (existing == null) openServer(server)
         }
         return true
     }
@@ -238,12 +281,12 @@ class VideoBrowser(private val app: FlamyApp, private val scope: CoroutineScope)
                     // The folder that was open last is gone; start from the top instead.
                     show(target.copy(path = emptyList()))
                 } else {
-                    _listing.value = NetworkListing.Failed(e.reason)
+                    _listing.value = NetworkListing.Failed(e.reason, e.detail)
                 }
             } catch (e: CancellationException) {
                 throw e
-            } catch (_: Exception) {
-                _listing.value = NetworkListing.Failed(SmbException.Reason.OTHER)
+            } catch (e: Exception) {
+                _listing.value = NetworkListing.Failed(SmbException.Reason.OTHER, e.toString())
             }
         }
     }

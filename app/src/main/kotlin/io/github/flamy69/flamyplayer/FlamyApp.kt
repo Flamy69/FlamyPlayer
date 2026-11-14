@@ -3,6 +3,7 @@ package io.github.flamy69.flamyplayer
 import android.app.Application
 import io.github.flamy69.flamyplayer.data.Settings
 import io.github.flamy69.flamyplayer.data.VideoSettings
+import io.github.flamy69.flamyplayer.network.LocalNetworkScanner
 import io.github.flamy69.flamyplayer.network.SecretStore
 import io.github.flamy69.flamyplayer.network.SmbClient
 
@@ -13,6 +14,10 @@ class FlamyApp : Application() {
 
     val videoSettings: VideoSettings by lazy { VideoSettings(this) }
 
+    val localNetwork: LocalNetworkScanner by lazy { LocalNetworkScanner(this) }
+
     /** One set of network connections for both the folder browser and the video player. */
-    val smb: SmbClient by lazy { SmbClient { SecretStore.decrypt(it.secret) } }
+    val smb: SmbClient by lazy {
+        SmbClient(password = { SecretStore.decrypt(it.secret) }, resolveHost = localNetwork::resolve)
+    }
 }

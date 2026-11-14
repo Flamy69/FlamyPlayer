@@ -58,6 +58,8 @@
     <string name="cd_forward">Forward 30 seconds</string>
     <string name="cd_speed">Playback speed</string>
     <string name="cd_open_folder">Open folder</string>
+    <string name="cd_show_password">Show password</string>
+    <string name="cd_hide_password">Hide password</string>
 
     <string name="tab_video">Video</string>
     <string name="action_retry">Try again</string>
@@ -69,7 +71,11 @@
     <string name="video_section_network">Network</string>
     <string name="video_section_device">On this device</string>
     <string name="video_add_network">Add network folder</string>
-    <string name="video_add_network_hint">A shared folder on a computer or a NAS</string>
+    <string name="video_add_network_hint">Enter the address of a computer or a NAS yourself</string>
+    <string name="video_find_devices">Search the network</string>
+    <string name="video_found_searching">Looking for computers and NAS boxes on your network…</string>
+    <string name="video_found_none">No computer or NAS with shared folders was found on your network.</string>
+    <string name="video_found_no_wifi">Connect the phone to Wi-Fi to see the computers and NAS boxes on your network.</string>
     <string name="video_permission_text">FlamyPlayer needs permission to see the videos on this device.</string>
     <string name="video_none_on_device">No videos were found on this device.</string>
     <string name="video_folder_empty_title">No videos here</string>
@@ -79,7 +85,7 @@
     <string name="network_title_add">Add network folder</string>
     <string name="network_title_edit">Edit network folder</string>
     <string name="network_address">Address</string>
-    <string name="network_address_hint">For example 192.168.1.10 or NAS/video</string>
+    <string name="network_address_hint">Name or IP address, optionally with a folder: 192.168.1.10 or NAS/video</string>
     <string name="network_address_error">Enter the name or IP address of the computer or NAS</string>
     <string name="network_name">Name (optional)</string>
     <string name="network_user">User name</string>
@@ -88,7 +94,8 @@
     <string name="network_password_unchanged">Unchanged</string>
     <string name="network_permission_text">FlamyPlayer needs permission to connect to devices on your local network.</string>
     <string name="network_error_title">Could not open the folder</string>
-    <string name="network_error_unreachable">The computer or NAS cannot be reached. Check that the phone is on the same Wi-Fi and that the address is right.</string>
+    <string name="network_error_unknown_host">No device with this name was found on the network. Check the name, or enter the IP address of the device instead.</string>
+    <string name="network_error_unreachable">The computer or NAS does not respond. Check that it is switched on, that the phone is on the same Wi-Fi, and that its firewall allows file sharing.</string>
     <string name="network_error_login">Signing in failed. Check the user name and the password.</string>
     <string name="network_error_access">This account is not allowed to open the folder.</string>
     <string name="network_error_not_found">The folder or file does not exist any more.</string>

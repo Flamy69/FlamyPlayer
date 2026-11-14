@@ -189,18 +189,20 @@ private fun HomeScreen(
     val insideVideoFolder = section == Section.VIDEO && videoLocation != VideoLocation.Home
     BackHandler(enabled = insideVideoFolder) { viewModel.video.up() }
 
-    var addingServer by rememberSaveable { mutableStateOf(false) }
+    // Not null while a new network folder is being added; holds the address to start with.
+    var newServerAddress by rememberSaveable { mutableStateOf<String?>(null) }
     var editedServer by remember { mutableStateOf<SmbServer?>(null) }
-    if (addingServer || editedServer != null) {
+    if (newServerAddress != null || editedServer != null) {
         val edited = editedServer
         ServerDialog(
             server = edited,
+            initialAddress = newServerAddress.orEmpty(),
             onSave = { name, address, user, password ->
                 viewModel.video.saveServer(edited, name, address, user, password)
             },
             onRemove = { edited?.let(viewModel.video::removeServer) },
             onDismiss = {
-                addingServer = false
+                newServerAddress = null
                 editedServer = null
             },
         )
@@ -242,7 +244,7 @@ private fun HomeScreen(
                         }
                     } else if (section == Section.VIDEO) {
                         when (videoLocation) {
-                            VideoLocation.Home -> IconButton(onClick = { addingServer = true }) {
+                            VideoLocation.Home -> IconButton(onClick = { newServerAddress = "" }) {
                                 Icon(Icons.Rounded.Add, stringResource(R.string.video_add_network))
                             }
                             is VideoLocation.Network -> IconButton(onClick = viewModel.video::reload) {
@@ -300,7 +302,7 @@ private fun HomeScreen(
                 // Video has its own sources and permissions; it does not need the audio library.
                 section == Section.VIDEO -> VideoScreen(
                     browser = viewModel.video,
-                    onAddServer = { addingServer = true },
+                    onAddServer = { newServerAddress = it },
                     onEditServer = { editedServer = it },
                 )
 

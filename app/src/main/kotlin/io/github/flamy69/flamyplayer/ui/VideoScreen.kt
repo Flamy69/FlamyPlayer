@@ -15,6 +15,7 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -27,11 +28,16 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.Add
 import androidx.compose.material.icons.rounded.CloudOff
+import androidx.compose.material.icons.rounded.Dns
 import androidx.compose.material.icons.rounded.Edit
 import androidx.compose.material.icons.rounded.Folder
 import androidx.compose.material.icons.rounded.Lan
 import androidx.compose.material.icons.rounded.Movie
+import androidx.compose.material.icons.rounded.Refresh
+import androidx.compose.material.icons.rounded.Search
 import androidx.compose.material.icons.rounded.VideoLibrary
+import androidx.compose.material.icons.rounded.Visibility
+import androidx.compose.material.icons.rounded.VisibilityOff
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.FilledTonalButton
@@ -59,6 +65,7 @@ import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
+import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.core.app.ActivityCompat
@@ -74,7 +81,7 @@ import java.util.Locale
 
 /** The video section: an overview of sources, and the folders below it. */
 @Composable
-fun VideoScreen(browser: VideoBrowser, onAddServer: () -> Unit, onEditServer: (SmbServer) -> Unit) {
+fun VideoScreen(browser: VideoBrowser, onAddServer: (address: String) -> Unit, onEditServer: (SmbServer) -> Unit) {
     val location by browser.location.collectAsStateWithLifecycle()
     // The videos of the device are only looked up once somebody actually comes here.
     LaunchedEffect(Unit) { browser.refreshDevice(force = true) }
@@ -87,8 +94,13 @@ fun VideoScreen(browser: VideoBrowser, onAddServer: () -> Unit, onEditServer: (S
 }
 
 @Composable
-private fun VideoHome(browser: VideoBrowser, onAddServer: () -> Unit, onEditServer: (SmbServer) -> Unit) {
+private fun VideoHome(
+    browser: VideoBrowser,
+    onAddServer: (address: String) -> Unit,
+    onEditServer: (SmbServer) -> Unit,
+) {
     val servers by browser.settings.servers.collectAsStateWithLifecycle()
+    val discovery by browser.discovery.collectAsStateWithLifecycle()
     val hasPermission by browser.hasPermission.collectAsStateWithLifecycle()
     val folders by browser.folders.collectAsStateWithLifecycle()
     val context = LocalContext.current
@@ -109,6 +121,15 @@ private fun VideoHome(browser: VideoBrowser, onAddServer: () -> Unit, onEditServ
             browser.openServer(server)
         }
     }
+    // Computers and NAS boxes on the Wi-Fi are looked up once, as soon as that is allowed.
+    LaunchedEffect(Unit) {
+        if (LocalNetwork.isAllowed(context)) browser.discover()
+    }
+    val searchNetwork = rememberPermissionRequest(
+        permission = LocalNetwork.permission,
+        isSatisfied = { LocalNetwork.isAllowed(context) },
+        onResult = { if (LocalNetwork.isAllowed(context)) browser.discover(again = true) },
+    )
     val askForVideos = rememberPermissionRequest(
         permission = VideoLibrary.permission,
         isSatisfied = { VideoLibrary.hasPermission(context) },
@@ -117,7 +138,24 @@ private fun VideoHome(browser: VideoBrowser, onAddServer: () -> Unit, onEditServ
 
     LazyColumn(Modifier.fillMaxSize()) {
         item(key = "network-header", contentType = "header") {
-            SectionHeader(stringResource(R.string.video_section_network))
+            SectionHeader(stringResource(R.string.video_section_network)) {
+                if (discovery == Discovery.Searching) {
+                    CircularProgressIndicator(
+                        strokeWidth = 2.dp,
+                        modifier = Modifier
+                            .padding(14.dp)
+                            .size(20.dp),
+                    )
+                } else {
+                    IconButton(onClick = searchNetwork) {
+                        Icon(
+                            Icons.Rounded.Refresh,
+                            stringResource(R.string.video_find_devices),
+                            tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                        )
+                    }
+                }
+            }
         }
         items(servers, key = { "server:" + it.id }, contentType = { "server" }) { server ->
             BrowserRow(
@@ -136,12 +174,56 @@ private fun VideoHome(browser: VideoBrowser, onAddServer: () -> Unit, onEditServ
                 },
             )
         }
+        when (val found = discovery) {
+            Discovery.Idle -> item(key = "found-search", contentType = "add") {
+                BrowserRow(
+                    icon = Icons.Rounded.Search,
+                    title = stringResource(R.string.video_find_devices),
+                    subtitle = "",
+                    onClick = searchNetwork,
+                )
+            }
+
+            Discovery.Searching -> item(key = "found-searching", contentType = "hint") {
+                Hint(stringResource(R.string.video_found_searching))
+            }
+
+            Discovery.NoWifi -> item(key = "found-no-wifi", contentType = "hint") {
+                Hint(stringResource(R.string.video_found_no_wifi))
+            }
+
+            is Discovery.Done -> if (found.devices.isEmpty()) {
+                item(key = "found-none", contentType = "hint") {
+                    Hint(stringResource(R.string.video_found_none))
+                }
+            } else {
+                // Devices that were saved already are listed above, with their folders.
+                val saved = servers.map { it.host.uppercase() }.toSet()
+                val fresh = found.devices.filter { it.host.uppercase() !in saved && it.address !in saved }
+                items(fresh, key = { "found:" + it.address }, contentType = { "found" }) { device ->
+                    BrowserRow(
+                        icon = Icons.Rounded.Dns,
+                        title = device.host,
+                        subtitle = if (device.name != null) device.address else "",
+                        onClick = { onAddServer(device.host) },
+                        trailing = {
+                            Icon(
+                                Icons.Rounded.Add,
+                                contentDescription = null,
+                                tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                                modifier = Modifier.padding(12.dp),
+                            )
+                        },
+                    )
+                }
+            }
+        }
         item(key = "network-add", contentType = "add") {
             BrowserRow(
                 icon = Icons.Rounded.Add,
                 title = stringResource(R.string.video_add_network),
-                subtitle = if (servers.isEmpty()) stringResource(R.string.video_add_network_hint) else "",
-                onClick = onAddServer,
+                subtitle = stringResource(R.string.video_add_network_hint),
+                onClick = { onAddServer("") },
             )
         }
 
@@ -245,6 +327,7 @@ private fun NetworkFolder(browser: VideoBrowser, location: VideoLocation.Network
 
         is NetworkListing.Failed -> NetworkError(
             reason = current.reason,
+            detail = current.detail,
             listingShares = directory.isEmpty(),
             onRetry = browser::reload,
         )
@@ -286,7 +369,7 @@ private fun NetworkFolder(browser: VideoBrowser, location: VideoLocation.Network
 }
 
 @Composable
-private fun NetworkError(reason: SmbException.Reason, listingShares: Boolean, onRetry: () -> Unit) {
+private fun NetworkError(reason: SmbException.Reason, detail: String, listingShares: Boolean, onRetry: () -> Unit) {
     val context = LocalContext.current
     val permissionMissing = reason == SmbException.Reason.UNREACHABLE && !LocalNetwork.isAllowed(context)
     val askForNetwork = rememberPermissionRequest(
@@ -298,7 +381,7 @@ private fun NetworkError(reason: SmbException.Reason, listingShares: Boolean, on
     val text = when {
         permissionMissing -> R.string.network_permission_text
         // Some servers do not hand out the list of their shared folders to everybody.
-        listingShares && reason != SmbException.Reason.UNREACHABLE && reason != SmbException.Reason.LOGIN_FAILED ->
+        listingShares && (reason == SmbException.Reason.OTHER || reason == SmbException.Reason.ACCESS_DENIED) ->
             R.string.network_error_shares
         else -> VideoPlayerViewModel.networkErrorText(reason)
     }
@@ -308,6 +391,8 @@ private fun NetworkError(reason: SmbException.Reason, listingShares: Boolean, on
         text = stringResource(text),
         buttonText = stringResource(if (permissionMissing) R.string.permission_button else R.string.action_retry),
         onButtonClick = if (permissionMissing) askForNetwork else onRetry,
+        // The technical reason, small, for when the explanation above does not help.
+        detail = detail.takeUnless { permissionMissing },
     )
 }
 
@@ -315,11 +400,13 @@ private fun NetworkError(reason: SmbException.Reason, listingShares: Boolean, on
 @Composable
 fun ServerDialog(
     server: SmbServer?,
+    initialAddress: String,
     onSave: (name: String, address: String, user: String, password: String) -> Boolean,
     onRemove: () -> Unit,
     onDismiss: () -> Unit,
 ) {
-    var address by rememberSaveable { mutableStateOf(server?.address.orEmpty()) }
+    var address by rememberSaveable { mutableStateOf(server?.address ?: initialAddress) }
+    var passwordVisible by rememberSaveable { mutableStateOf(false) }
     var name by rememberSaveable { mutableStateOf(server?.name.orEmpty()) }
     var user by rememberSaveable { mutableStateOf(server?.user.orEmpty()) }
     var password by rememberSaveable { mutableStateOf("") }
@@ -377,7 +464,25 @@ fun ServerDialog(
                         if (!server?.secret.isNullOrEmpty()) Text(stringResource(R.string.network_password_unchanged))
                     },
                     singleLine = true,
-                    visualTransformation = PasswordVisualTransformation(),
+                    visualTransformation = if (passwordVisible) {
+                        VisualTransformation.None
+                    } else {
+                        PasswordVisualTransformation()
+                    },
+                    trailingIcon = {
+                        IconButton(onClick = { passwordVisible = !passwordVisible }) {
+                            Icon(
+                                imageVector = if (passwordVisible) {
+                                    Icons.Rounded.VisibilityOff
+                                } else {
+                                    Icons.Rounded.Visibility
+                                },
+                                contentDescription = stringResource(
+                                    if (passwordVisible) R.string.cd_hide_password else R.string.cd_show_password,
+                                ),
+                            )
+                        }
+                    },
                     keyboardOptions = plainText.copy(keyboardType = KeyboardType.Password),
                     modifier = Modifier.fillMaxWidth(),
                 )
@@ -457,12 +562,31 @@ private fun Loading() {
 }
 
 @Composable
-private fun SectionHeader(text: String) {
+private fun SectionHeader(text: String, action: @Composable () -> Unit = {}) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(start = 16.dp, end = 8.dp, top = 8.dp)
+            .heightIn(min = 48.dp),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Text(
+            text = text,
+            style = MaterialTheme.typography.titleSmall,
+            color = MaterialTheme.colorScheme.primary,
+            modifier = Modifier.weight(1f),
+        )
+        action()
+    }
+}
+
+@Composable
+private fun Hint(text: String) {
     Text(
         text = text,
-        style = MaterialTheme.typography.titleSmall,
-        color = MaterialTheme.colorScheme.primary,
-        modifier = Modifier.padding(start = 16.dp, end = 16.dp, top = 16.dp, bottom = 4.dp),
+        style = MaterialTheme.typography.bodyMedium,
+        color = MaterialTheme.colorScheme.onSurfaceVariant,
+        modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp),
     )
 }
 

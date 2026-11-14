@@ -466,6 +466,7 @@ class VideoPlayerViewModel(app: Application) : AndroidViewModel(app) {
         private const val END_MARGIN_MS = 15_000L
 
         fun networkErrorText(reason: SmbException.Reason): Int = when (reason) {
+            SmbException.Reason.UNKNOWN_HOST -> R.string.network_error_unknown_host
             SmbException.Reason.UNREACHABLE -> R.string.network_error_unreachable
             SmbException.Reason.LOGIN_FAILED -> R.string.network_error_login
             SmbException.Reason.ACCESS_DENIED -> R.string.network_error_access
