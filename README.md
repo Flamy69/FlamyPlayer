@@ -23,9 +23,17 @@ No accounts, no ads, no network access. The app does not even request the intern
 - Skips files the device cannot decode instead of stopping the playlist
 - Light and dark theme, English and Czech
 
+## Download
+
+Grab the APK of the [latest release](https://github.com/Flamy69/FlamyPlayer/releases/latest) and
+open it on your phone. Android will ask you to allow installing apps from your browser or file
+manager the first time. Newer releases install over older ones and keep your settings.
+
+Requires Android 8.0 or newer.
+
 ## Using it
 
-1. Install the app and allow access to audio files when asked.
+1. Open the app and allow access to audio files when asked.
 2. **Music**: tap the folder icon, tick the folders you want, confirm. Tap **Shuffle**, or tap any
    track to start from there.
 3. **Audiobooks**: tap the folder icon and tick the folder of each book. Every ticked folder is one
@@ -74,16 +82,42 @@ Requirements: JDK 17 or newer and the Android SDK (either set `ANDROID_HOME`, or
 adb install -r app/build/outputs/apk/release/app-release.apk
 ```
 
-The release build is minified and noticeably smoother than a debug build. For convenience it is
-signed with the debug key so that it installs straight away; configure your own keystore before
-distributing builds.
+The release build is minified and noticeably smoother than a debug build.
 
 ```sh
 ./gradlew testDebugUnitTest      # unit tests
 ./gradlew lintDebug              # Android lint
 ```
 
-Minimum Android version: 8.0 (API 26).
+### Signing
+
+On a fresh checkout the release build is signed with the Android debug key, so it installs straight
+away but cannot replace an official release (Android refuses updates signed with a different key).
+To sign with your own key, create a `keystore.properties` file in the project root; it is ignored
+by git:
+
+```properties
+FLAMY_KEYSTORE_FILE=my-key.jks
+FLAMY_KEYSTORE_PASSWORD=...
+FLAMY_KEY_ALIAS=...
+FLAMY_KEY_PASSWORD=...
+```
+
+The same four names work as environment variables, which is how the CI build gets them.
+
+### Releases
+
+Every push to `main` is tested and built by [GitHub Actions](.github/workflows/build.yml), and the
+APK is attached to the workflow run. Pushing a version tag publishes it as a release:
+
+```sh
+git tag v1.2.3
+git push origin v1.2.3
+```
+
+The tag sets the version of the app, so it has to have the form `vMAJOR.MINOR.PATCH`. The workflow
+reads the signing key from the repository secrets `KEYSTORE_BASE64` (the keystore file, Base64
+encoded), `KEYSTORE_PASSWORD`, `KEY_ALIAS` and `KEY_PASSWORD`.
 
 ## Project layout
 

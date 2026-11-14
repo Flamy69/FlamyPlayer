@@ -1,7 +1,28 @@
+import java.util.Properties
+
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.compose)
 }
+
+// The version comes from gradle.properties, or from the release tag on CI (-PappVersion=1.2.3).
+// "1.2.3" becomes version code 10203, so every release installs over the previous one.
+val appVersion: String = providers.gradleProperty("appVersion").get()
+val appVersionCode: Int = appVersion.split('.').map { it.toInt() }
+    .let { (major, minor, patch) -> major * 10_000 + minor * 100 + patch }
+
+// Release signing is configured outside the repository: in a keystore.properties file next to
+// settings.gradle.kts, or in environment variables of the same names on CI.
+val keystoreProperties = Properties().apply {
+    val file = rootProject.file("keystore.properties")
+    if (file.isFile) file.inputStream().use { load(it) }
+}
+
+fun signingValue(name: String): String? =
+    providers.environmentVariable(name).orNull?.takeIf { it.isNotEmpty() }
+        ?: keystoreProperties.getProperty(name)
+
+val releaseKeystore: String? = signingValue("FLAMY_KEYSTORE_FILE")
 
 android {
     namespace = "io.github.flamy69.flamyplayer"
@@ -11,8 +32,19 @@ android {
         applicationId = "io.github.flamy69.flamyplayer"
         minSdk = 26
         targetSdk = 37
-        versionCode = 1
-        versionName = "1.0.0"
+        versionCode = appVersionCode
+        versionName = appVersion
+    }
+
+    signingConfigs {
+        if (releaseKeystore != null) {
+            create("release") {
+                storeFile = rootProject.file(releaseKeystore)
+                storePassword = signingValue("FLAMY_KEYSTORE_PASSWORD")
+                keyAlias = signingValue("FLAMY_KEY_ALIAS")
+                keyPassword = signingValue("FLAMY_KEY_PASSWORD")
+            }
+        }
     }
 
     buildTypes {
@@ -20,9 +52,10 @@ android {
             isMinifyEnabled = true
             isShrinkResources = true
             proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro")
-            // Signed with the debug key so that `assembleRelease` yields an APK you can
-            // install straight away. Use your own keystore before distributing builds.
-            signingConfig = signingConfigs.getByName("debug")
+            // Without a release keystore the build falls back to the debug key, so that
+            // `assembleRelease` still yields an installable APK on a fresh checkout. Such a
+            // build cannot be installed over one signed with the real key, and vice versa.
+            signingConfig = signingConfigs.findByName("release") ?: signingConfigs.getByName("debug")
         }
     }
 
