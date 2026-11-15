@@ -21,6 +21,8 @@ internet is the stream of the radio station you choose to listen to.
 - Shuffle that remembers: tracks you have not heard yet come first, and a track you listened
   to the end is followed by another one of the same artist, three in a row at most
 - Repeat all / repeat one, search across title, artist, album and file name
+- Playlist files (`.m3u`, `.m3u8`, `.pls`) in your music folders get a list of their own; they
+  never add anything to the big playlist, so no track ends up in the shuffle twice
 - Audiobooks keep their own position, with a progress bar per book, 10 s back / 30 s forward
   buttons and playback speed from 0.75× to 2×
 - Boost for quiet recordings and quiet headphones: up to +20 dB on top of the normal volume,
@@ -43,6 +45,8 @@ internet is the stream of the radio station you choose to listen to.
   10 seconds, choice of audio track, resume where you stopped
 - DTS, AC3, E-AC3 and TrueHD sound plays even on phones without a decoder for it, through the
   FFmpeg decoders that come with the app
+- A DVD copied to a network folder (`VIDEO_TS`) plays as films: the one gigabyte pieces of a
+  title are joined into one video and the menus are left out
 - Internet radio: about 180 Czech stations, favorites, search, the song that is on air where
   the station tells, and "next" / "previous" on the headset to change the station
 - Light and dark theme, English and Czech

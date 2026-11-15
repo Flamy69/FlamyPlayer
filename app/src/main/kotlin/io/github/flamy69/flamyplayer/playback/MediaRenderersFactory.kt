@@ -45,7 +45,7 @@ class MediaRenderersFactory(context: Context) : DefaultRenderersFactory(context)
             context, extensionRendererMode, mediaCodecSelector, enableDecoderFallback, audioSink, eventHandler,
             eventListener, out,
         )
-        if (ffmpegAvailable) out.add(FfmpegAudioRenderer(eventHandler, eventListener, audioSink))
+        if (isFfmpegAvailable) out.add(FfmpegAudioRenderer(eventHandler, eventListener, audioSink))
     }
 
     override fun buildVideoRenderers(
@@ -62,16 +62,16 @@ class MediaRenderersFactory(context: Context) : DefaultRenderersFactory(context)
             context, extensionRendererMode, mediaCodecSelector, enableDecoderFallback, eventHandler, eventListener,
             allowedVideoJoiningTimeMs, out,
         )
-        if (ffmpegAvailable) {
+        if (isFfmpegAvailable) {
             out.add(FfmpegVideoRenderer(allowedVideoJoiningTimeMs, eventHandler, eventListener, MAX_DROPPED_FRAMES_TO_NOTIFY))
         }
     }
 
-    private companion object {
-        const val MAX_DROPPED_FRAMES_TO_NOTIFY = 50
+    companion object {
+        private const val MAX_DROPPED_FRAMES_TO_NOTIFY = 50
 
         /** Whether the FFmpeg libraries could be loaded on this device. */
-        val ffmpegAvailable: Boolean by lazy {
+        val isFfmpegAvailable: Boolean by lazy {
             try {
                 FfmpegLibrary.isAvailable()
             } catch (_: LinkageError) {

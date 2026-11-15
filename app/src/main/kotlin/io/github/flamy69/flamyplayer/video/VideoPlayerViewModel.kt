@@ -28,6 +28,7 @@ import androidx.media3.session.MediaSession
 import io.github.flamy69.flamyplayer.FlamyApp
 import io.github.flamy69.flamyplayer.R
 import io.github.flamy69.flamyplayer.data.VideoSettings
+import io.github.flamy69.flamyplayer.network.JoinDataSource
 import io.github.flamy69.flamyplayer.network.NetworkDataSource
 import io.github.flamy69.flamyplayer.network.SmbDataSource
 import io.github.flamy69.flamyplayer.network.SmbException
@@ -101,11 +102,14 @@ class VideoPlayerViewModel(app: Application) : AndroidViewModel(app) {
             DefaultMediaSourceFactory(
                 // Files and content URIs are handled by the default source; shared folders
                 // (smb://) and media servers (http://) by ours.
-                DefaultDataSource.Factory(
-                    app,
-                    NetworkDataSource.Factory(
-                        smb = SmbDataSource.Factory(flamyApp.smb, settings::server),
-                        http = DefaultHttpDataSource.Factory().setAllowCrossProtocolRedirects(true),
+                // (and the pieces of a DVD title, read as one film, by the one around them).
+                JoinDataSource.Factory(
+                    DefaultDataSource.Factory(
+                        app,
+                        NetworkDataSource.Factory(
+                            smb = SmbDataSource.Factory(flamyApp.smb, settings::server),
+                            http = DefaultHttpDataSource.Factory().setAllowCrossProtocolRedirects(true),
+                        ),
                     ),
                 ),
                 DefaultExtractorsFactory()
@@ -453,11 +457,13 @@ class VideoPlayerViewModel(app: Application) : AndroidViewModel(app) {
             return groups.first().getTrackFormat(0)
         }
         val app = getApplication<Application>()
+        // If the decoders that come with the app are missing, that is the likely reason.
+        val reason = if (MediaRenderersFactory.isFfmpegAvailable) "" else " " + app.getString(R.string.video_decoders_missing)
         unsupported(C.TRACK_TYPE_VIDEO)?.let {
-            return app.getString(R.string.video_unsupported_picture, codecName(it.sampleMimeType) ?: "?")
+            return app.getString(R.string.video_unsupported_picture, codecName(it.sampleMimeType) ?: "?") + reason
         }
         unsupported(C.TRACK_TYPE_AUDIO)?.let {
-            return app.getString(R.string.video_unsupported_sound, codecName(it.sampleMimeType) ?: "?")
+            return app.getString(R.string.video_unsupported_sound, codecName(it.sampleMimeType) ?: "?") + reason
         }
         return null
     }

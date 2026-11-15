@@ -1,5 +1,6 @@
 package io.github.flamy69.flamyplayer.network
 
+import io.github.flamy69.flamyplayer.data.VideoFiles
 import java.io.IOException
 
 /** A saved network location: a Windows share, a NAS, or a folder somewhere inside one. */
@@ -21,8 +22,20 @@ data class SmbServer(
     val title: String get() = name.ifBlank { address }
 }
 
-/** One line of a directory listing. */
-class SmbEntry(val name: String, val isDirectory: Boolean, val size: Long)
+/**
+ * One line of a directory listing.
+ *
+ * @param parts for a film that is spread over several files: those files, in playing order
+ */
+class SmbEntry(
+    val name: String,
+    val isDirectory: Boolean,
+    val size: Long,
+    val parts: List<SmbEntry> = emptyList(),
+) {
+    /** Whether this line is something to watch. */
+    val isVideo: Boolean get() = !isDirectory && (parts.isNotEmpty() || VideoFiles.isVideo(name))
+}
 
 object SmbAddress {
 

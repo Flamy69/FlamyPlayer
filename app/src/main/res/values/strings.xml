@@ -64,6 +64,8 @@
     <string name="cd_show_password">Show password</string>
     <string name="cd_hide_password">Hide password</string>
 
+    <string name="playlists_title">Playlists</string>
+    <string name="video_decoders_missing">The decoders that come with the app could not be loaded on this phone.</string>
     <string name="tab_video">Video</string>
     <string name="tab_radio">Radio</string>
     <string name="radio_favorites">Favorites</string>

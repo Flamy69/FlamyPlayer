@@ -8,6 +8,7 @@ import android.os.Build
 import androidx.core.content.ContextCompat
 import androidx.core.net.toUri
 import io.github.flamy69.flamyplayer.FlamyApp
+import io.github.flamy69.flamyplayer.data.DvdFiles
 import io.github.flamy69.flamyplayer.data.NaturalOrder
 import io.github.flamy69.flamyplayer.data.SubtitleFiles
 import io.github.flamy69.flamyplayer.data.Video
@@ -18,6 +19,7 @@ import io.github.flamy69.flamyplayer.data.VideoSettings
 import io.github.flamy69.flamyplayer.data.groupVideosByFolder
 import io.github.flamy69.flamyplayer.network.Dlna
 import io.github.flamy69.flamyplayer.network.FoundDevice
+import io.github.flamy69.flamyplayer.network.JoinUri
 import io.github.flamy69.flamyplayer.network.MediaEntry
 import io.github.flamy69.flamyplayer.network.MediaFolder
 import io.github.flamy69.flamyplayer.network.MediaServer
@@ -279,8 +281,19 @@ class VideoBrowser(private val app: FlamyApp, private val scope: CoroutineScope)
 
         val files = entries.filterNot { it.isDirectory }
         val names = files.map { it.name }
-        val videos = files.filter { VideoFiles.isVideo(it.name) }
+        val videos = files.filter { it.isVideo }
         val items = videos.map { video ->
+            if (video.parts.isNotEmpty()) {
+                // The pieces of a DVD title are read one after the other, as one film.
+                return@map VideoItem(
+                    uri = JoinUri.build(
+                        video.parts.map { JoinUri.Part(SmbUri.build(server.id, directory + it.name), it.size) },
+                    ),
+                    title = video.name,
+                    key = networkKey(server.id, directory, video.name),
+                    subtitles = SubtitleSource.None,
+                )
+            }
             VideoItem(
                 uri = SmbUri.build(server.id, directory + video.name),
                 title = VideoFiles.baseName(video.name),
@@ -389,15 +402,31 @@ class VideoBrowser(private val app: FlamyApp, private val scope: CoroutineScope)
         } else {
             app.smb.list(server, full.first(), full.drop(1))
         }
-        return entries
-            .filter { entry ->
+        return joinDvdTitles(
+            entries.filter { entry ->
                 if (entry.isDirectory) {
                     !entry.name.startsWith('.') && entry.name !in HIDDEN_FOLDERS
                 } else {
                     VideoFiles.isVideo(entry.name) || SubtitleFiles.format(entry.name) != null
                 }
-            }
-            .sortedWith(compareByDescending<SmbEntry> { it.isDirectory }.thenBy(NaturalOrder) { it.name })
+            },
+        ).sortedWith(compareByDescending<SmbEntry> { it.isDirectory }.thenBy(NaturalOrder) { it.name })
+    }
+
+    /**
+     * In the folder of a copied DVD, shows every film as one line instead of its one gigabyte
+     * pieces, and leaves out the menus.
+     */
+    private fun joinDvdTitles(entries: List<SmbEntry>): List<SmbEntry> {
+        val files = entries.filterNot { it.isDirectory }.associateBy { it.name }
+        val titles = DvdFiles.titles(files.keys)
+        if (titles.isEmpty()) return entries
+        val pieces = titles.flatMap { it.parts }.toSet()
+        val films = titles.map { title ->
+            val parts = title.parts.map(files::getValue)
+            SmbEntry("DVD ${title.number}", isDirectory = false, size = parts.sumOf { it.size }, parts = parts)
+        }
+        return entries.filter { it.isDirectory || (it.name !in pieces && !DvdFiles.isMenu(it.name)) } + films
     }
 
     private fun forget(serverId: String) {

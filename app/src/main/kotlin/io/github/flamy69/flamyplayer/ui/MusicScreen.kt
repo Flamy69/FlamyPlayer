@@ -13,6 +13,8 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.rounded.KeyboardArrowRight
+import androidx.compose.material.icons.automirrored.rounded.QueueMusic
 import androidx.compose.material.icons.rounded.LibraryMusic
 import androidx.compose.material.icons.rounded.PlayArrow
 import androidx.compose.material.icons.rounded.Shuffle
@@ -38,12 +40,14 @@ import io.github.flamy69.flamyplayer.data.TrackStat
 fun MusicScreen(
     tracks: List<Track>,
     stats: Map<String, TrackStat>,
+    playlistCount: Int,
     hasFolders: Boolean,
     query: String,
     currentTrackId: Long?,
     onChooseFolders: () -> Unit,
     onShuffle: () -> Unit,
     onPlayInOrder: () -> Unit,
+    onOpenPlaylists: () -> Unit,
     onTrackClick: (Track) -> Unit,
 ) {
     if (tracks.isEmpty()) {
@@ -92,6 +96,41 @@ fun MusicScreen(
                     }
                 }
             }
+            // Playlist files are kept apart from the tracks, so that a track which is also
+            // named in a playlist is not in the big list twice.
+            if (playlistCount > 0) {
+                item(key = "playlists", contentType = "playlists") {
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .clickable(onClick = onOpenPlaylists)
+                            .padding(horizontal = 16.dp, vertical = 12.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                    ) {
+                        Icon(
+                            Icons.AutoMirrored.Rounded.QueueMusic,
+                            contentDescription = null,
+                            tint = MaterialTheme.colorScheme.primary,
+                        )
+                        Spacer(Modifier.width(16.dp))
+                        Text(
+                            text = stringResource(R.string.playlists_title),
+                            style = MaterialTheme.typography.bodyLarge,
+                            modifier = Modifier.weight(1f),
+                        )
+                        Text(
+                            text = playlistCount.toString(),
+                            style = MaterialTheme.typography.labelLarge,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        )
+                        Icon(
+                            Icons.AutoMirrored.Rounded.KeyboardArrowRight,
+                            contentDescription = null,
+                            tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                        )
+                    }
+                }
+            }
         } else if (visible.isEmpty()) {
             item(key = "no-results", contentType = "message") {
                 Text(
@@ -109,14 +148,14 @@ fun MusicScreen(
                 durationMs = track.durationMs,
                 isCurrent = track.id == currentTrackId,
                 onClick = { onTrackClick(track) },
-                detail = stats[track.path]?.let(::describe),
+                detail = stats[track.path]?.let(::describeStat),
             )
         }
     }
 }
 
 /** `3× · 87 %`: how often the track came up while shuffling, and how much of it was heard last time. */
-private fun describe(stat: TrackStat): String? = listOfNotNull(
+internal fun describeStat(stat: TrackStat): String? = listOfNotNull(
     stat.shufflePlays.takeIf { it > 0 }?.let { "$it×" },
     stat.lastPercent?.let { "$it %" },
 ).joinToString(" · ").ifEmpty { null }

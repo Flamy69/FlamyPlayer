@@ -71,7 +71,6 @@ import androidx.compose.ui.unit.dp
 import androidx.core.app.ActivityCompat
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import io.github.flamy69.flamyplayer.R
-import io.github.flamy69.flamyplayer.data.VideoFiles
 import io.github.flamy69.flamyplayer.data.VideoFolder
 import io.github.flamy69.flamyplayer.data.VideoLibrary
 import io.github.flamy69.flamyplayer.network.SmbException
@@ -346,7 +345,7 @@ private fun NetworkFolder(browser: VideoBrowser, location: VideoLocation.Network
 
         is NetworkListing.Ready -> {
             val visible = remember(current) {
-                current.entries.filter { it.isDirectory || VideoFiles.isVideo(it.name) }
+                current.entries.filter { it.isDirectory || it.isVideo }
             }
             if (visible.isEmpty()) {
                 EmptyState(

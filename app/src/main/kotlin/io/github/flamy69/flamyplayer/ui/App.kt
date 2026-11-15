@@ -76,7 +76,11 @@ fun FlamyPlayerApp(viewModel: MainViewModel) {
     var pickerSection by rememberSaveable { mutableStateOf<Section?>(null) }
     var openBookFolder by rememberSaveable { mutableStateOf<String?>(null) }
     var nowPlayingOpen by rememberSaveable { mutableStateOf(false) }
+    var playlistsOpen by rememberSaveable { mutableStateOf(false) }
+    var openPlaylistPath by rememberSaveable { mutableStateOf<String?>(null) }
 
+    val playlists by viewModel.playlists.collectAsStateWithLifecycle()
+    val openPlaylist = openPlaylistPath?.let { path -> playlists.firstOrNull { it.path == path } }
     val openBook = openBookFolder?.let { folder -> books?.firstOrNull { it.folder == folder } }
     val picker = pickerSection
     val showNowPlaying = nowPlayingOpen && playerState.hasQueue
@@ -129,9 +133,36 @@ fun FlamyPlayerApp(viewModel: MainViewModel) {
                 )
             }
 
+            openPlaylist != null -> {
+                val stats by viewModel.trackStats.stats.collectAsStateWithLifecycle()
+                BackHandler { openPlaylistPath = null }
+                PlaylistScreen(
+                    playlist = openPlaylist,
+                    stats = stats,
+                    currentTrackId = playerState.trackId.takeIf { playerState.bookFolder == null },
+                    onBack = { openPlaylistPath = null },
+                    onShuffle = { viewModel.playPlaylist(openPlaylist, shuffle = true) },
+                    onPlayInOrder = { viewModel.playPlaylist(openPlaylist, shuffle = false) },
+                    onTrackClick = { viewModel.playPlaylist(openPlaylist, startIndex = it) },
+                    bottomBar = { miniPlayer(true) },
+                )
+            }
+
+            playlistsOpen && playlists.isNotEmpty() -> {
+                BackHandler { playlistsOpen = false }
+                PlaylistsScreen(
+                    playlists = playlists,
+                    onOpen = { openPlaylistPath = it.path },
+                    onBack = { playlistsOpen = false },
+                    bottomBar = { miniPlayer(true) },
+                )
+            }
+
             else -> HomeScreen(
                 viewModel = viewModel,
                 section = section,
+                playlistCount = playlists.size,
+                onOpenPlaylists = { playlistsOpen = true },
                 onSectionChange = {
                     section = it
                     viewModel.settings.lastSection = it
@@ -169,6 +200,8 @@ fun FlamyPlayerApp(viewModel: MainViewModel) {
 private fun HomeScreen(
     viewModel: MainViewModel,
     section: Section,
+    playlistCount: Int,
+    onOpenPlaylists: () -> Unit,
     onSectionChange: (Section) -> Unit,
     onChooseFolders: () -> Unit,
     onOpenBook: (Book) -> Unit,
@@ -357,12 +390,14 @@ private fun HomeScreen(
                     MusicScreen(
                         tracks = tracks,
                         stats = stats,
+                        playlistCount = playlistCount,
                         hasFolders = folders.isNotEmpty(),
                         query = if (searchActive) query else "",
                         currentTrackId = playerState.trackId.takeIf { playerState.bookFolder == null },
                         onChooseFolders = onChooseFolders,
                         onShuffle = { viewModel.playMusic(shuffle = true) },
                         onPlayInOrder = { viewModel.playMusic(shuffle = false) },
+                        onOpenPlaylists = onOpenPlaylists,
                         onTrackClick = { viewModel.playMusic(startTrackId = it.id) },
                     )
                 }

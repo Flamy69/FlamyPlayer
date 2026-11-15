@@ -15,6 +15,10 @@ import io.github.flamy69.flamyplayer.data.FolderSelection
 import io.github.flamy69.flamyplayer.data.FolderTree
 import io.github.flamy69.flamyplayer.data.MediaLibrary
 import io.github.flamy69.flamyplayer.data.NaturalOrder
+import io.github.flamy69.flamyplayer.data.Playlist
+import io.github.flamy69.flamyplayer.data.PlaylistFile
+import io.github.flamy69.flamyplayer.data.PlaylistFiles
+import io.github.flamy69.flamyplayer.data.PlaylistLibrary
 import io.github.flamy69.flamyplayer.data.RadioStation
 import io.github.flamy69.flamyplayer.data.RadioStations
 import io.github.flamy69.flamyplayer.data.Section
@@ -66,6 +70,26 @@ class MainViewModel(app: Application) : AndroidViewModel(app) {
                     .sortedWith(compareBy(NaturalOrder) { it.title })
             }
         }.flowOn(Dispatchers.Default).stateIn(viewModelScope, SharingStarted.Eagerly, null)
+
+    /** The playlist files on the device, as they were read. */
+    private val playlistFiles = MutableStateFlow<List<PlaylistFile>>(emptyList())
+
+    /**
+     * The playlist files inside the selected music folders, matched to tracks of the library.
+     * Playlists that name nothing the library has are left out.
+     */
+    val playlists: StateFlow<List<Playlist>> =
+        combine(library, playlistFiles, settings.musicFolders) { tracks, files, folders ->
+            val wanted = files.filter { FolderSelection.covers(folders, it.folder) }
+            if (tracks == null || wanted.isEmpty()) {
+                emptyList()
+            } else {
+                val matcher = PlaylistFiles.Matcher(tracks)
+                wanted.map(matcher::resolve)
+                    .filter { it.tracks.isNotEmpty() }
+                    .sortedWith(compareBy(NaturalOrder) { it.name })
+            }
+        }.flowOn(Dispatchers.Default).stateIn(viewModelScope, SharingStarted.Eagerly, emptyList())
 
     /** All folders that contain audio, for the folder picker. */
     val folderTree: StateFlow<FolderNode?> = library.map { tracks ->
@@ -121,6 +145,7 @@ class MainViewModel(app: Application) : AndroidViewModel(app) {
         if (!granted || loadJob?.isActive == true) return
         loadJob = viewModelScope.launch {
             library.value = withContext(Dispatchers.IO) { MediaLibrary.load(getApplication()) }
+            playlistFiles.value = withContext(Dispatchers.IO) { PlaylistLibrary.load(getApplication()) }
         }
     }
 
@@ -145,6 +170,27 @@ class MainViewModel(app: Application) : AndroidViewModel(app) {
         settings.setShuffle(shuffle)
         player.play(
             PlayRequest(tracks, startIndex, 0L),
+            shuffle = shuffle,
+            repeatMode = settings.repeatMode.value,
+            speed = 1f,
+        )
+    }
+
+    /**
+     * Plays [playlist] from the track at [startIndex], or from its first track. Shuffling
+     * starts with one of its tracks that were played the fewest times.
+     */
+    fun playPlaylist(playlist: Playlist, startIndex: Int? = null, shuffle: Boolean = settings.shuffle.value) {
+        val tracks = playlist.tracks
+        if (tracks.isEmpty()) return
+        val index = when {
+            startIndex != null -> startIndex.coerceIn(tracks.indices)
+            shuffle -> ShufflePlan.leastPlayed(tracks.size, { trackStats.shufflePlays(tracks[it].path) })
+            else -> 0
+        }
+        settings.setShuffle(shuffle)
+        player.play(
+            PlayRequest(tracks, index, 0L),
             shuffle = shuffle,
             repeatMode = settings.repeatMode.value,
             speed = 1f,

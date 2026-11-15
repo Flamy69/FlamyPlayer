@@ -62,6 +62,8 @@
     <string name="cd_show_password">Zobrazit heslo</string>
     <string name="cd_hide_password">Skrýt heslo</string>
 
+    <string name="playlists_title">Playlisty</string>
+    <string name="video_decoders_missing">Dekodéry přibalené k aplikaci se na tomto telefonu nepodařilo načíst.</string>
     <string name="tab_video">Video</string>
     <string name="tab_radio">Rádio</string>
     <string name="radio_favorites">Oblíbené</string>

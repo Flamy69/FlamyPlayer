@@ -5,6 +5,30 @@ import java.nio.charset.CharacterCodingException
 import java.nio.charset.Charset
 import java.nio.charset.CodingErrorAction
 
+/**
+ * The files of a DVD copied to a disk. A film is a "title": `VTS_01_1.VOB`, `VTS_01_2.VOB`
+ * and so on are consecutive pieces of title 1, cut at one gigabyte each.
+ */
+object DvdFiles {
+
+    /** One film of the disc and the files it is made of, in playing order. */
+    class Title(val number: Int, val parts: List<String>)
+
+    private val part = Regex("VTS_(\\d{2})_(\\d)\\.VOB", RegexOption.IGNORE_CASE)
+
+    /** The menus of the disc: moving pictures, but nothing anybody wants to watch. */
+    fun isMenu(fileName: String): Boolean =
+        fileName.equals("VIDEO_TS.VOB", ignoreCase = true) || part.matchEntire(fileName)?.groupValues?.get(2) == "0"
+
+    /** The titles among [fileNames], in the order of the disc. */
+    fun titles(fileNames: Collection<String>): List<Title> = fileNames
+        .mapNotNull { name -> part.matchEntire(name)?.let { Triple(it.groupValues[1].toInt(), it.groupValues[2].toInt(), name) } }
+        .filter { it.second > 0 }
+        .groupBy { it.first }
+        .toSortedMap()
+        .map { (number, parts) -> Title(number, parts.sortedBy { it.second }.map { it.third }) }
+}
+
 /** Recognizes video files by name; used where there is no media index, i.e. on network shares. */
 object VideoFiles {
 
