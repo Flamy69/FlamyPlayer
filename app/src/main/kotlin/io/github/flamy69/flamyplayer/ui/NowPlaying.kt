@@ -142,7 +142,13 @@ fun NowPlayingScreen(
                     Icon(Icons.Rounded.KeyboardArrowDown, stringResource(R.string.action_close))
                 }
                 Text(
-                    text = stringResource(if (isBook) R.string.tab_audiobooks else R.string.tab_music),
+                    text = stringResource(
+                        when {
+                            state.isRadio -> R.string.tab_radio
+                            isBook -> R.string.tab_audiobooks
+                            else -> R.string.tab_music
+                        },
+                    ),
                     style = MaterialTheme.typography.titleSmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                     textAlign = TextAlign.Center,
@@ -185,7 +191,8 @@ fun NowPlayingScreen(
             )
             Spacer(Modifier.height(16.dp))
 
-            SeekBar(state, player)
+            // A radio is live: there is nothing to seek in.
+            if (!state.isRadio) SeekBar(state, player)
             Spacer(Modifier.height(8.dp))
 
             Row(
@@ -193,7 +200,9 @@ fun NowPlayingScreen(
                 horizontalArrangement = Arrangement.SpaceEvenly,
                 verticalAlignment = Alignment.CenterVertically,
             ) {
-                if (isBook) {
+                if (state.isRadio) {
+                    Spacer(Modifier.size(48.dp))
+                } else if (isBook) {
                     ControlButton(Icons.Rounded.Replay10, R.string.cd_rewind, onClick = player::seekBack)
                 } else {
                     ControlButton(
@@ -208,7 +217,9 @@ fun NowPlayingScreen(
                     PlayPauseIcon(state.isPlaying, Modifier.size(40.dp))
                 }
                 ControlButton(Icons.Rounded.SkipNext, R.string.cd_next, large = true, onClick = player::next)
-                if (isBook) {
+                if (state.isRadio) {
+                    Spacer(Modifier.size(48.dp))
+                } else if (isBook) {
                     ControlButton(Icons.Rounded.Forward30, R.string.cd_forward, onClick = player::seekForward)
                 } else {
                     ControlButton(

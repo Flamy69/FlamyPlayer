@@ -3,6 +3,7 @@ package io.github.flamy69.flamyplayer.playback
 import android.os.Bundle
 import androidx.media3.common.MediaItem
 import androidx.media3.common.MediaMetadata
+import io.github.flamy69.flamyplayer.data.RadioStation
 import io.github.flamy69.flamyplayer.data.Track
 import java.util.concurrent.atomic.AtomicReference
 
@@ -14,7 +15,13 @@ class PlayRequest(
     /** Folder of the audiobook the tracks belong to, or `null` for music. */
     val bookFolder: String? = null,
     val bookTitle: String? = null,
-)
+    /** Radio stations to play instead of [tracks]. */
+    val stations: List<RadioStation> = emptyList(),
+) {
+    /** What the player is given to play. */
+    fun mediaItems(): List<MediaItem> =
+        if (stations.isNotEmpty()) stations.map { it.toMediaItem() } else tracks.map { it.toMediaItem(this) }
+}
 
 /**
  * Hands playlists from the UI to the playback service.
@@ -27,6 +34,10 @@ object PlaybackQueue {
 
     const val PLACEHOLDER_ID = "flamyplayer:pending-queue"
     const val EXTRA_BOOK_FOLDER = "flamyplayer.book_folder"
+
+    /** Path and length of a music track, for keeping its listening history. */
+    const val EXTRA_TRACK_PATH = "flamyplayer.track_path"
+    const val EXTRA_TRACK_DURATION = "flamyplayer.track_duration"
 
     private val pending = AtomicReference<PlayRequest?>()
 
@@ -41,6 +52,24 @@ object PlaybackQueue {
 
     fun take(): PlayRequest? = pending.getAndSet(null)
 }
+
+/** Whether this is a radio station, not a file. */
+val MediaItem.isRadio: Boolean get() = mediaMetadata.mediaType == MediaMetadata.MEDIA_TYPE_RADIO_STATION
+
+fun RadioStation.toMediaItem(): MediaItem = MediaItem.Builder()
+    .setMediaId(mediaId)
+    .setUri(url)
+    .setMediaMetadata(
+        // No title: that place is for what the station says is on air right now.
+        MediaMetadata.Builder()
+            .setStation(name)
+            .setArtist(name)
+            .setMediaType(MediaMetadata.MEDIA_TYPE_RADIO_STATION)
+            .setIsPlayable(true)
+            .setIsBrowsable(false)
+            .build(),
+    )
+    .build()
 
 fun Track.toMediaItem(request: PlayRequest): MediaItem {
     val metadata = MediaMetadata.Builder().setIsPlayable(true).setIsBrowsable(false)
@@ -57,6 +86,12 @@ fun Track.toMediaItem(request: PlayRequest): MediaItem {
             .setArtist(artist)
             .setAlbumTitle(album)
             .setMediaType(MediaMetadata.MEDIA_TYPE_MUSIC)
+            .setExtras(
+                Bundle().apply {
+                    putString(PlaybackQueue.EXTRA_TRACK_PATH, path)
+                    putLong(PlaybackQueue.EXTRA_TRACK_DURATION, durationMs)
+                },
+            )
     }
     return MediaItem.Builder()
         .setMediaId(id.toString())

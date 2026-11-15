@@ -23,12 +23,18 @@ import kotlinx.coroutines.withContext
 /** Snapshot of the player for the UI. The playback position is polled separately. */
 data class PlayerState(
     val hasQueue: Boolean = false,
+    /** Identifies what is playing: the id of a track, or of a radio station. */
+    val mediaId: String? = null,
     val trackId: Long? = null,
     val title: String = "",
     val artist: String? = null,
     val album: String? = null,
     /** Folder of the audiobook being played, or `null` while playing music. */
     val bookFolder: String? = null,
+    /** Whether a radio station is playing; its [title] is what is on air, if the station tells. */
+    val isRadio: Boolean = false,
+    /** Whether playback stopped because of an error. */
+    val failed: Boolean = false,
     val artwork: ImageBitmap? = null,
     /** Whether the play/pause button should offer "pause". */
     val isPlaying: Boolean = false,
@@ -87,8 +93,9 @@ class PlayerConnection(context: Context, private val scope: CoroutineScope) {
         val active = PlaybackQueue.active
         val sameQueue = active != null &&
             active.bookFolder == request.bookFolder &&
-            c.mediaItemCount == request.tracks.size &&
-            active.tracks == request.tracks
+            c.mediaItemCount == request.tracks.size + request.stations.size &&
+            active.tracks == request.tracks &&
+            active.stations == request.stations
         if (sameQueue) {
             c.seekTo(request.startIndex, request.startPositionMs)
         } else {
@@ -142,13 +149,19 @@ class PlayerConnection(context: Context, private val scope: CoroutineScope) {
     private fun publish(c: MediaController) {
         val item = c.currentMediaItem
         val metadata = c.mediaMetadata
+        val station = item?.takeIf { it.isRadio }?.mediaMetadata?.station?.toString()
+        // A station that tells what is on air has that as its title; the others their name.
+        val title = metadata.title?.toString()?.takeIf { it.isNotBlank() } ?: station.orEmpty()
         _state.update { old ->
             old.copy(
                 hasQueue = item != null,
+                mediaId = item?.mediaId,
                 trackId = item?.mediaId?.toLongOrNull(),
-                title = metadata.title?.toString().orEmpty(),
-                artist = metadata.artist?.toString(),
+                title = title,
+                artist = if (station != null) station.takeIf { it != title } else metadata.artist?.toString(),
                 album = metadata.albumTitle?.toString(),
+                isRadio = station != null,
+                failed = c.playerError != null,
                 bookFolder = item?.mediaMetadata?.extras?.getString(PlaybackQueue.EXTRA_BOOK_FOLDER),
                 isPlaying = c.showsPause(),
                 durationMs = c.duration.takeIf { it != C.TIME_UNSET && it > 0 } ?: 0L,

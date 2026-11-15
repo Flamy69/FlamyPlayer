@@ -13,16 +13,20 @@
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE_MEDIA_PLAYBACK" />
     <uses-permission android:name="android.permission.WAKE_LOCK" />
 
-    <!-- Only used to play video from network folders (Windows shares, NAS) that the user adds.
+    <!-- Used to play video from the local network, from shared folders (Windows shares, NAS)
+         that the user adds and from media servers found there, and to play internet radio.
          Android 17 additionally asks the user before the app may reach the local network. -->
     <uses-permission android:name="android.permission.INTERNET" />
     <uses-permission android:name="android.permission.ACCESS_LOCAL_NETWORK" />
     <!-- Tells which network the phone's Wi-Fi is on, to look for shared folders there. -->
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
 
+    <!-- Plain HTTP is what media servers on a home network (DLNA) speak, and what many radio
+         stations still stream over. -->
     <application
         android:name=".FlamyApp"
         android:allowBackup="true"
+        android:usesCleartextTraffic="true"
         android:icon="@mipmap/ic_launcher"
         android:label="@string/app_name"
         android:roundIcon="@mipmap/ic_launcher"

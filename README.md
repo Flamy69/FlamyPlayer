@@ -1,6 +1,6 @@
 # FlamyPlayer
 
-A small, fast, folder-based media player for Android. It does three things:
+A small, fast, folder-based media player for Android. It does four things:
 
 - **Music** – point it at a folder (for example your whole `Music` directory full of albums and
   discographies) and everything inside becomes one big playlist. Hit shuffle and get on with your day.
@@ -8,15 +8,19 @@ A small, fast, folder-based media player for Android. It does three things:
   finish, and remembers where you stopped.
 - **Video** – plays the videos on the phone and, over Wi-Fi, the ones in shared folders of a
   Windows PC or a NAS, with subtitles you can restyle and move.
+- **Radio** – Czech internet radio stations, your favorites first.
 
-No accounts, no ads, no tracking. The app never contacts the internet; it only talks to your own
-local network, to find the machines that share folders and to play from the ones you add.
+No accounts, no ads, no tracking. On your own local network the app looks for the machines that
+share folders or stream media and plays from them. The only thing it ever fetches from the
+internet is the stream of the radio station you choose to listen to.
 
 ## Features
 
 - Pick one or more folders per section; subfolders are always included
 - The library opens instantly, even with thousands of tracks (see [below](#why-it-is-fast))
-- Shuffle, repeat all / repeat one, search across title, artist, album and file name
+- Shuffle that remembers: tracks you have not heard yet come first, and a track you listened
+  to the end is followed by another one of the same artist, three in a row at most
+- Repeat all / repeat one, search across title, artist, album and file name
 - Audiobooks keep their own position, with a progress bar per book, 10 s back / 30 s forward
   buttons and playback speed from 0.75× to 2×
 - Boost for quiet recordings and quiet headphones: up to +20 dB on top of the normal volume,
@@ -30,11 +34,15 @@ local network, to find the machines that share folders and to play from the ones
   from the share without copying
 - Computers and NAS boxes on your Wi-Fi are found automatically, and Windows computer names
   work as addresses
+- Media servers (DLNA; "media streaming" in Windows) show up as well and can be browsed and
+  played without signing in
 - Subtitles from the video file or from `.srt`, `.ass` and `.vtt` files next to it, with
   adjustable size, color and position; old Windows code pages are detected, so accented
   letters survive
 - Rotation lock and manual rotation, brightness and volume by swiping, double tap to skip
   10 seconds, choice of audio track, resume where you stopped
+- Internet radio: about 180 Czech stations, favorites, search, the song that is on air where
+  the station tells, and "next" / "previous" on the headset to change the station
 - Light and dark theme, English and Czech
 
 ## Download
@@ -57,8 +65,12 @@ Requires Android 8.0 or newer.
    computers and NAS boxes on your Wi-Fi that share folders. Tap one of them, or tap **+** and
    enter an address yourself, for example `192.168.1.10`, `NAS/video` or `\\PC\Films`; add the
    user name and password if the share needs them. Tap a video to play it; the other videos of
-   the folder follow. When you add another folder, the settings of one you already have,
-   password included, can be copied with one tap.
+   the folder follow. A computer with media streaming switched on is listed as a media server:
+   it needs no sign-in, but it only hands out the video itself, so subtitle files lying next
+   to a video are found through a shared folder only.
+
+5. **Radio**: tap a station to listen, tap it again to pause. The star puts a station among
+   your favorites at the top of the list.
 
 In the video player:
 
@@ -120,8 +132,11 @@ busy with data instead of round trips.
 Finding the machines on your network takes two to four seconds: the app tries the file sharing
 port of every address of the phone's own Wi-Fi network (at most 254 of them) at the same time
 and asks the ones that answer for their name. Alongside, it asks the network which machines
-stream media, the way a TV finds its sources, and checks those for shared folders too. It never
-looks beyond the local network.
+stream media, the way a TV finds its sources. It never looks beyond the local network.
+
+The shuffle keeps a small database of how often each track came up and how much of it you
+heard the last time (shown next to the track as `3× · 87 %`). Choosing the next track is one
+pass over the playlist, so it costs nothing you could notice even with thousands of tracks.
 
 ## Building
 
@@ -174,8 +189,8 @@ encoded), `KEYSTORE_PASSWORD`, `KEY_ALIAS` and `KEY_PASSWORD`.
 
 ```
 app/src/main/kotlin/io/github/flamy69/flamyplayer/
-├── data/        library queries, folder tree, natural ordering, settings
-├── network/     SMB client and the data source that lets the player read from a share
+├── data/        library queries, folder tree, natural ordering, settings, listening history
+├── network/     SMB and media server (DLNA) clients, device search, data sources for the player
 ├── playback/    media session service and the UI's connection to it
 ├── ui/          Jetpack Compose screens
 └── video/       the video player
@@ -191,12 +206,19 @@ injection framework; the whole app is a few small files.
 | --- | --- |
 | `READ_MEDIA_AUDIO` (`READ_EXTERNAL_STORAGE` before Android 13) | Reading your audio files |
 | `READ_MEDIA_VIDEO`, `READ_MEDIA_VISUAL_USER_SELECTED` | Reading your videos; asked for in the video section only |
-| `INTERNET` | Connecting to the network folders you add; the app contacts nothing else |
+| `INTERNET` | Connecting to the network folders you add, to media servers on your network and to the radio station you listen to; the app contacts nothing else |
 | `ACCESS_LOCAL_NETWORK` | The same, on Android 17 and newer, where reaching devices on the local network needs your consent |
 | `POST_NOTIFICATIONS` | Showing the playback notification |
 | `FOREGROUND_SERVICE`, `FOREGROUND_SERVICE_MEDIA_PLAYBACK` | Playing while the app is in the background |
 | `WAKE_LOCK` | Keeping playback going with the screen off |
 | `ACCESS_NETWORK_STATE` | Finding out which Wi-Fi network the phone is on, to look for shared folders there |
+
+## Radio stations
+
+The list of stations comes from [radio-browser.info](https://www.radio-browser.info), a community
+database that is free to use. It is built into the app, so the app itself never asks that service
+for anything; every station on the list was on air when the release was made. Stations change
+their addresses now and then: one that stopped working is fixed by the next release.
 
 ## License
 

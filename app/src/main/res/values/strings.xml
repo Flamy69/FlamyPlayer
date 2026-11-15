@@ -65,6 +65,13 @@
     <string name="cd_hide_password">Hide password</string>
 
     <string name="tab_video">Video</string>
+    <string name="tab_radio">Radio</string>
+    <string name="radio_favorites">Favorites</string>
+    <string name="radio_all">All stations</string>
+    <string name="radio_search_hint">Search stations</string>
+    <string name="radio_failed">The station cannot be played right now</string>
+    <string name="cd_favorite_add">Add to favorites</string>
+    <string name="cd_favorite_remove">Remove from favorites</string>
     <string name="action_retry">Try again</string>
     <string name="action_save">Save</string>
     <string name="action_cancel">Cancel</string>
@@ -76,9 +83,11 @@
     <string name="video_add_network">Add network folder</string>
     <string name="video_add_network_hint">Enter the address of a computer or a NAS yourself</string>
     <string name="video_find_devices">Search the network</string>
-    <string name="video_found_searching">Looking for computers and NAS boxes on your network…</string>
-    <string name="video_found_none">No computer or NAS with shared folders was found on your network. A computer only shows up here when it shares at least one folder and its firewall allows file sharing.</string>
+    <string name="video_found_searching">Looking for computers, NAS boxes and media streams on your network…</string>
+    <string name="video_found_none">Nothing was found on your network. A computer shows up here when it shares a folder or has media streaming switched on, and its firewall allows that.</string>
     <string name="video_found_no_wifi">Connect the phone to Wi-Fi to see the computers and NAS boxes on your network.</string>
+    <string name="video_media_server">Media streaming</string>
+    <string name="stream_error">The media server did not answer as expected. Check that the computer is switched on and that media streaming is allowed for this phone.</string>
     <string name="video_permission_text">FlamyPlayer needs permission to see the videos on this device.</string>
     <string name="video_none_on_device">No videos were found on this device.</string>
     <string name="video_folder_empty_title">No videos here</string>
@@ -94,9 +103,7 @@
     <string name="network_user">User name</string>
     <string name="network_user_hint">Leave empty to sign in as a guest</string>
     <string name="network_password">Password</string>
-    <string name="network_password_keep">Leave empty to keep the saved password</string>
-    <string name="network_password_same_as">Leave empty to use the same password as for %1$s</string>
-    <string name="network_copy_from">Copy the settings from</string>
+    <string name="network_password_unchanged">Unchanged</string>
     <string name="network_permission_text">FlamyPlayer needs permission to connect to devices on your local network.</string>
     <string name="network_error_title">Could not open the folder</string>
     <string name="network_error_unknown_host">No device with this name was found on the network. Check the name, or enter the IP address of the device instead.</string>

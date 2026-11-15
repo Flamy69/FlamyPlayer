@@ -19,6 +19,7 @@ import androidx.media3.common.text.Cue
 import androidx.media3.common.text.CueGroup
 import androidx.media3.common.util.UnstableApi
 import androidx.media3.datasource.DefaultDataSource
+import androidx.media3.datasource.DefaultHttpDataSource
 import androidx.media3.exoplayer.DefaultRenderersFactory
 import androidx.media3.exoplayer.ExoPlayer
 import androidx.media3.exoplayer.source.DefaultMediaSourceFactory
@@ -26,6 +27,7 @@ import androidx.media3.session.MediaSession
 import io.github.flamy69.flamyplayer.FlamyApp
 import io.github.flamy69.flamyplayer.R
 import io.github.flamy69.flamyplayer.data.VideoSettings
+import io.github.flamy69.flamyplayer.network.NetworkDataSource
 import io.github.flamy69.flamyplayer.network.SmbDataSource
 import io.github.flamy69.flamyplayer.network.SmbException
 import kotlinx.coroutines.Dispatchers
@@ -95,8 +97,15 @@ class VideoPlayerViewModel(app: Application) : AndroidViewModel(app) {
     val player: ExoPlayer = ExoPlayer.Builder(app, DefaultRenderersFactory(app).setEnableDecoderFallback(true))
         .setMediaSourceFactory(
             DefaultMediaSourceFactory(
-                // Files and content URIs are handled by the default source, smb:// by ours.
-                DefaultDataSource.Factory(app, SmbDataSource.Factory(flamyApp.smb, settings::server)),
+                // Files and content URIs are handled by the default source; shared folders
+                // (smb://) and media servers (http://) by ours.
+                DefaultDataSource.Factory(
+                    app,
+                    NetworkDataSource.Factory(
+                        smb = SmbDataSource.Factory(flamyApp.smb, settings::server),
+                        http = DefaultHttpDataSource.Factory().setAllowCrossProtocolRedirects(true),
+                    ),
+                ),
             ),
         )
         .setAudioAttributes(

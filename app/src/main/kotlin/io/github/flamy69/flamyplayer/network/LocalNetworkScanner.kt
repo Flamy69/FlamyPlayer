@@ -55,9 +55,12 @@ class FoundDevice(
     fun isCalled(host: String): Boolean = host == address || host.equals(name, ignoreCase = true)
 }
 
+/** What a search of the local network turned up. */
+class NetworkScan(val devices: List<FoundDevice>, val mediaServers: List<MediaServer>)
+
 /**
- * Knows the phone's Wi-Fi network: finds the machines on it that share folders, and turns
- * their names into addresses.
+ * Knows the phone's Wi-Fi network: finds the machines on it that share folders or stream
+ * media, and turns their names into addresses.
  */
 class LocalNetworkScanner(context: Context) {
 
@@ -67,20 +70,20 @@ class LocalNetworkScanner(context: Context) {
     private val known = ConcurrentHashMap<String, String>()
 
     /**
-     * Looks for machines that share folders. Returns `null` when the phone is not on Wi-Fi (or
-     * a wired network). Takes two to four seconds.
+     * Looks for machines that share folders and for media servers. Returns `null` when the
+     * phone is not on Wi-Fi (or a wired network). Takes three to four seconds.
      *
      * Two searches run side by side: the file sharing port of every address around the phone
      * is tried, and the network is asked who streams media, the way a TV finds its sources.
      * Machines that answer the second question get a second try at the first.
      */
-    suspend fun scan(): List<FoundDevice>? {
+    suspend fun scan(): NetworkScan? {
         val wifi = wifi() ?: return null
         val own = Subnet.toAddress(wifi.address)
         val neighbors = Subnet.neighbors(wifi.address, wifi.prefixLength).map(Subnet::toAddress)
         val found = withContext(Dispatchers.IO) {
             val streaming = async {
-                Ssdp.mediaServers { socket ->
+                Ssdp.mediaServers(neighbors) { socket ->
                     try {
                         wifi.network.bindSocket(socket)
                     } catch (_: IOException) {
@@ -89,15 +92,27 @@ class LocalNetworkScanner(context: Context) {
                 }
             }
             val sharing = PortScan.open(neighbors, SMB_PORT, PROBE_TIMEOUT_MS)
-            val missed = streaming.await().filter { it != own && it !in sharing }
-            (sharing + PortScan.open(missed, SMB_PORT, PROBE_TIMEOUT_MS))
+            val answers = streaming.await()
+            val servers = answers.map { answer -> async { mediaServer(answer) } }
+            val missed = answers.map { it.address }.distinct().filter { it != own && it !in sharing }
+            val devices = (sharing + PortScan.open(missed, SMB_PORT, PROBE_TIMEOUT_MS))
                 .map { target -> async { describe(target) } }
-                .awaitAll()
+            NetworkScan(devices.awaitAll(), servers.awaitAll().distinctBy { it.id })
         }
-        for (device in found) {
+        for (device in found.devices) {
             device.name?.let { known[it.uppercase()] = device.address }
         }
         return found
+    }
+
+    private fun mediaServer(answer: Ssdp.Answer): MediaServer {
+        val address = answer.address.hostAddress.orEmpty()
+        return try {
+            Dlna.describe(answer.location, address)
+        } catch (_: IOException) {
+            // Listed all the same; opening it tries again and says what is wrong.
+            MediaServer(answer.location, answer.location, address, address, controlUrl = null, serviceType = null)
+        }
     }
 
     private fun describe(target: InetAddress): FoundDevice {

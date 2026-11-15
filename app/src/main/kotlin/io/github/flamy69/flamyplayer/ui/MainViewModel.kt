@@ -15,11 +15,15 @@ import io.github.flamy69.flamyplayer.data.FolderSelection
 import io.github.flamy69.flamyplayer.data.FolderTree
 import io.github.flamy69.flamyplayer.data.MediaLibrary
 import io.github.flamy69.flamyplayer.data.NaturalOrder
+import io.github.flamy69.flamyplayer.data.RadioStation
+import io.github.flamy69.flamyplayer.data.RadioStations
 import io.github.flamy69.flamyplayer.data.Section
 import io.github.flamy69.flamyplayer.data.Settings
 import io.github.flamy69.flamyplayer.data.Track
+import io.github.flamy69.flamyplayer.data.TrackStats
 import io.github.flamy69.flamyplayer.playback.PlayRequest
 import io.github.flamy69.flamyplayer.playback.PlayerConnection
+import io.github.flamy69.flamyplayer.playback.ShufflePlan
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
@@ -28,16 +32,17 @@ import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
-import kotlin.random.Random
 
 class MainViewModel(app: Application) : AndroidViewModel(app) {
 
     val settings: Settings = (app as FlamyApp).settings
+    val trackStats: TrackStats = (app as FlamyApp).trackStats
     val player = PlayerConnection(app, viewModelScope)
     val video = VideoBrowser(app as FlamyApp, viewModelScope)
 
@@ -66,6 +71,23 @@ class MainViewModel(app: Application) : AndroidViewModel(app) {
     val folderTree: StateFlow<FolderNode?> = library.map { tracks ->
         FolderTree.build(tracks.orEmpty().groupingBy { it.folder }.eachCount())
     }.flowOn(Dispatchers.Default).stateIn(viewModelScope, SharingStarted.Eagerly, null)
+
+    /** The radio stations that come with the app; read when the radio section is first opened. */
+    val radioStations: StateFlow<List<RadioStation>?> = flow<List<RadioStation>?> {
+        emit(
+            try {
+                RadioStations.load(getApplication())
+            } catch (_: Exception) {
+                emptyList()
+            },
+        )
+    }.flowOn(Dispatchers.IO).stateIn(viewModelScope, SharingStarted.Lazily, null)
+
+    /** The stations shown first; a handful of well known ones until the listener chooses. */
+    val radioFavorites: StateFlow<Set<String>> =
+        combine(radioStations, settings.radioFavorites) { stations, chosen ->
+            chosen ?: RadioStations.defaultFavorites(stations.orEmpty())
+        }.stateIn(viewModelScope, SharingStarted.Lazily, emptySet())
 
     private var loadJob: Job? = null
     private var reloadJob: Job? = null
@@ -108,13 +130,16 @@ class MainViewModel(app: Application) : AndroidViewModel(app) {
 
     fun clearFolders(section: Section) = settings.setFolders(section, emptySet())
 
-    /** Plays the music playlist from [startTrackId], or from a random / the first track. */
+    /**
+     * Plays the music playlist from [startTrackId], or from the first track. Shuffling starts
+     * with one of the tracks that were played the fewest times.
+     */
     fun playMusic(startTrackId: Long? = null, shuffle: Boolean = settings.shuffle.value) {
         val tracks = musicTracks.value
         if (tracks.isNullOrEmpty()) return
         val startIndex = when {
             startTrackId != null -> tracks.indexOfFirst { it.id == startTrackId }.coerceAtLeast(0)
-            shuffle -> Random.nextInt(tracks.size)
+            shuffle -> ShufflePlan.leastPlayed(tracks.size, { trackStats.shufflePlays(tracks[it].path) })
             else -> 0
         }
         settings.setShuffle(shuffle)
@@ -145,6 +170,31 @@ class MainViewModel(app: Application) : AndroidViewModel(app) {
             repeatMode = Player.REPEAT_MODE_OFF,
             speed = settings.bookSpeed.value,
         )
+    }
+
+    /**
+     * Plays [station]; "next" and "previous" then move through [stations]. Tapping the station
+     * that is on pauses it or lets it go on.
+     */
+    fun playRadio(stations: List<RadioStation>, station: RadioStation) {
+        val index = stations.indexOf(station)
+        if (index < 0) return
+        val state = player.state.value
+        if (state.mediaId == station.mediaId && !state.failed) {
+            player.togglePlay()
+            return
+        }
+        player.play(
+            PlayRequest(emptyList(), index, 0L, stations = stations),
+            shuffle = false,
+            repeatMode = Player.REPEAT_MODE_OFF,
+            speed = 1f,
+        )
+    }
+
+    fun toggleRadioFavorite(station: RadioStation) {
+        val favorites = radioFavorites.value
+        settings.setRadioFavorites(if (station.id in favorites) favorites - station.id else favorites + station.id)
     }
 
     fun toggleShuffle() {

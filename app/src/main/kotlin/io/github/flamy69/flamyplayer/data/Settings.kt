@@ -8,7 +8,7 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 
-enum class Section { MUSIC, BOOKS, VIDEO }
+enum class Section { MUSIC, BOOKS, VIDEO, RADIO }
 
 /** Everything the app remembers between launches. Small enough for plain SharedPreferences. */
 class Settings(context: Context) {
@@ -43,6 +43,11 @@ class Settings(context: Context) {
      */
     val boosts: StateFlow<Map<String, Int>> = _boosts.asStateFlow()
 
+    private val _radioFavorites = MutableStateFlow(prefs.getStringSet(KEY_RADIO_FAVORITES, null)?.toSet())
+
+    /** The ids of the radio stations the listener marked; `null` until the first one is chosen. */
+    val radioFavorites: StateFlow<Set<String>?> = _radioFavorites.asStateFlow()
+
     var lastSection: Section
         get() = prefs.getString(KEY_SECTION, null).let { name -> Section.entries.firstOrNull { it.name == name } }
             ?: Section.MUSIC
@@ -60,6 +65,11 @@ class Settings(context: Context) {
             _bookFolders.value = folders
             prefs.edit { putStringSet(KEY_BOOK_FOLDERS, folders) }
         }
+    }
+
+    fun setRadioFavorites(stationIds: Set<String>) {
+        _radioFavorites.value = stationIds
+        prefs.edit { putStringSet(KEY_RADIO_FAVORITES, stationIds) }
     }
 
     fun setShuffle(enabled: Boolean) {
@@ -131,5 +141,6 @@ class Settings(context: Context) {
         private const val KEY_REPEAT = "repeat_mode"
         private const val KEY_BOOK_SPEED = "book_speed"
         private const val KEY_SECTION = "section"
+        private const val KEY_RADIO_FAVORITES = "radio_favorites"
     }
 }

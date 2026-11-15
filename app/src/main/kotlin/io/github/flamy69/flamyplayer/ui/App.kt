@@ -27,6 +27,7 @@ import androidx.compose.material.icons.rounded.FolderOpen
 import androidx.compose.material.icons.rounded.LibraryMusic
 import androidx.compose.material.icons.rounded.Lock
 import androidx.compose.material.icons.rounded.Movie
+import androidx.compose.material.icons.rounded.Radio
 import androidx.compose.material.icons.rounded.Refresh
 import androidx.compose.material.icons.rounded.Search
 import androidx.compose.material3.CircularProgressIndicator
@@ -181,7 +182,7 @@ private fun HomeScreen(
 
     var searching by rememberSaveable { mutableStateOf(false) }
     var query by rememberSaveable { mutableStateOf("") }
-    val searchActive = searching && section == Section.MUSIC && hasPermission
+    val searchActive = searching && ((section == Section.MUSIC && hasPermission) || section == Section.RADIO)
     val closeSearch = {
         searching = false
         query = ""
@@ -201,9 +202,8 @@ private fun HomeScreen(
         ServerDialog(
             server = edited,
             initialAddress = newServerAddress.orEmpty(),
-            templates = servers,
-            onSave = { name, address, user, password, passwordFrom ->
-                viewModel.video.saveServer(edited, name, address, user, password, passwordFrom)
+            onSave = { name, address, user, password ->
+                viewModel.video.saveServer(edited, name, address, user, password)
             },
             onRemove = { edited?.let(viewModel.video::removeServer) },
             onDismiss = {
@@ -218,17 +218,28 @@ private fun HomeScreen(
             TopAppBar(
                 title = {
                     if (searchActive) {
-                        SearchField(query, onQueryChange = { query = it })
+                        SearchField(
+                            query = query,
+                            hint = stringResource(
+                                if (section == Section.RADIO) R.string.radio_search_hint else R.string.search_hint,
+                            ),
+                            onQueryChange = { query = it },
+                        )
                     } else {
                         Text(
                             text = when (val location = videoLocation.takeIf { section == Section.VIDEO }) {
                                 null -> stringResource(
-                                    if (section == Section.MUSIC) R.string.tab_music else R.string.tab_audiobooks,
+                                    when (section) {
+                                        Section.MUSIC -> R.string.tab_music
+                                        Section.RADIO -> R.string.tab_radio
+                                        else -> R.string.tab_audiobooks
+                                    },
                                 )
                                 VideoLocation.Home -> stringResource(R.string.tab_video)
                                 is VideoLocation.Device -> location.folder.substringAfterLast('/')
                                 is VideoLocation.Network -> location.path.lastOrNull()
                                     ?: servers.firstOrNull { it.id == location.serverId }?.title.orEmpty()
+                                is VideoLocation.Stream -> location.path.lastOrNull()?.title ?: location.server.name
                             },
                             maxLines = 1,
                             overflow = TextOverflow.Ellipsis,
@@ -252,10 +263,15 @@ private fun HomeScreen(
                             VideoLocation.Home -> IconButton(onClick = { newServerAddress = "" }) {
                                 Icon(Icons.Rounded.Add, stringResource(R.string.video_add_network))
                             }
-                            is VideoLocation.Network -> IconButton(onClick = viewModel.video::reload) {
-                                Icon(Icons.Rounded.Refresh, stringResource(R.string.action_refresh))
-                            }
+                            is VideoLocation.Network, is VideoLocation.Stream ->
+                                IconButton(onClick = viewModel.video::reload) {
+                                    Icon(Icons.Rounded.Refresh, stringResource(R.string.action_refresh))
+                                }
                             is VideoLocation.Device -> Unit
+                        }
+                    } else if (section == Section.RADIO) {
+                        IconButton(onClick = { searching = true }) {
+                            Icon(Icons.Rounded.Search, stringResource(R.string.action_search))
                         }
                     } else if (hasPermission) {
                         if (section == Section.MUSIC) {
@@ -292,6 +308,12 @@ private fun HomeScreen(
                         icon = { Icon(Icons.Rounded.Movie, contentDescription = null) },
                         label = { Text(stringResource(R.string.tab_video)) },
                     )
+                    NavigationBarItem(
+                        selected = section == Section.RADIO,
+                        onClick = { onSectionChange(Section.RADIO) },
+                        icon = { Icon(Icons.Rounded.Radio, contentDescription = null) },
+                        label = { Text(stringResource(R.string.tab_radio)) },
+                    )
                 }
             }
         },
@@ -311,14 +333,30 @@ private fun HomeScreen(
                     onEditServer = { editedServer = it },
                 )
 
+                // Radio comes from the internet; it does not need the audio library either.
+                section == Section.RADIO -> {
+                    val stations by viewModel.radioStations.collectAsStateWithLifecycle()
+                    val favorites by viewModel.radioFavorites.collectAsStateWithLifecycle()
+                    RadioScreen(
+                        stations = stations,
+                        favorites = favorites,
+                        query = if (searchActive) query else "",
+                        playerState = playerState,
+                        onPlay = viewModel::playRadio,
+                        onToggleFavorite = viewModel::toggleRadioFavorite,
+                    )
+                }
+
                 !hasPermission -> PermissionPrompt(onChanged = viewModel::refresh)
 
                 tracks == null || bookList == null -> CircularProgressIndicator(Modifier.align(Alignment.Center))
 
                 section == Section.MUSIC -> {
                     val folders by viewModel.settings.musicFolders.collectAsStateWithLifecycle()
+                    val stats by viewModel.trackStats.stats.collectAsStateWithLifecycle()
                     MusicScreen(
                         tracks = tracks,
+                        stats = stats,
                         hasFolders = folders.isNotEmpty(),
                         query = if (searchActive) query else "",
                         currentTrackId = playerState.trackId.takeIf { playerState.bookFolder == null },
@@ -346,14 +384,14 @@ private fun HomeScreen(
 }
 
 @Composable
-private fun SearchField(query: String, onQueryChange: (String) -> Unit) {
+private fun SearchField(query: String, hint: String, onQueryChange: (String) -> Unit) {
     val focusRequester = remember { FocusRequester() }
     val focusManager = LocalFocusManager.current
     LaunchedEffect(Unit) { focusRequester.requestFocus() }
     TextField(
         value = query,
         onValueChange = onQueryChange,
-        placeholder = { Text(stringResource(R.string.search_hint)) },
+        placeholder = { Text(hint) },
         singleLine = true,
         keyboardOptions = KeyboardOptions(imeAction = ImeAction.Search),
         keyboardActions = KeyboardActions(onSearch = { focusManager.clearFocus() }),

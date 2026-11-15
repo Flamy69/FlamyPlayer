@@ -32,10 +32,12 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import io.github.flamy69.flamyplayer.R
 import io.github.flamy69.flamyplayer.data.Track
+import io.github.flamy69.flamyplayer.data.TrackStat
 
 @Composable
 fun MusicScreen(
     tracks: List<Track>,
+    stats: Map<String, TrackStat>,
     hasFolders: Boolean,
     query: String,
     currentTrackId: Long?,
@@ -107,12 +109,23 @@ fun MusicScreen(
                 durationMs = track.durationMs,
                 isCurrent = track.id == currentTrackId,
                 onClick = { onTrackClick(track) },
+                detail = stats[track.path]?.let(::describe),
             )
         }
     }
 }
 
-/** One line of a track list; also used for the chapters of a book. */
+/** `3× · 87 %`: how often the track came up while shuffling, and how much of it was heard last time. */
+private fun describe(stat: TrackStat): String? = listOfNotNull(
+    stat.shufflePlays.takeIf { it > 0 }?.let { "$it×" },
+    stat.lastPercent?.let { "$it %" },
+).joinToString(" · ").ifEmpty { null }
+
+/**
+ * One line of a track list; also used for the chapters of a book.
+ *
+ * @param detail a short note shown under the duration
+ */
 @Composable
 fun TrackRow(
     title: String,
@@ -121,6 +134,7 @@ fun TrackRow(
     isCurrent: Boolean,
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
+    detail: String? = null,
 ) {
     Row(
         modifier = modifier
@@ -149,10 +163,20 @@ fun TrackRow(
             }
         }
         Spacer(Modifier.width(12.dp))
-        Text(
-            text = formatTime(durationMs),
-            style = MaterialTheme.typography.labelMedium,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-        )
+        Column(horizontalAlignment = Alignment.End) {
+            Text(
+                text = formatTime(durationMs),
+                style = MaterialTheme.typography.labelMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+            if (detail != null) {
+                Text(
+                    text = detail,
+                    style = MaterialTheme.typography.labelSmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    maxLines = 1,
+                )
+            }
+        }
     }
 }

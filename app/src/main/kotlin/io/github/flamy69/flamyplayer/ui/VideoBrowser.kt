@@ -6,6 +6,7 @@ import android.content.Intent
 import android.content.pm.PackageManager
 import android.os.Build
 import androidx.core.content.ContextCompat
+import androidx.core.net.toUri
 import io.github.flamy69.flamyplayer.FlamyApp
 import io.github.flamy69.flamyplayer.data.NaturalOrder
 import io.github.flamy69.flamyplayer.data.SubtitleFiles
@@ -15,7 +16,12 @@ import io.github.flamy69.flamyplayer.data.VideoFolder
 import io.github.flamy69.flamyplayer.data.VideoLibrary
 import io.github.flamy69.flamyplayer.data.VideoSettings
 import io.github.flamy69.flamyplayer.data.groupVideosByFolder
+import io.github.flamy69.flamyplayer.network.Dlna
 import io.github.flamy69.flamyplayer.network.FoundDevice
+import io.github.flamy69.flamyplayer.network.MediaEntry
+import io.github.flamy69.flamyplayer.network.MediaFolder
+import io.github.flamy69.flamyplayer.network.MediaServer
+import io.github.flamy69.flamyplayer.network.NetworkScan
 import io.github.flamy69.flamyplayer.network.SecretStore
 import io.github.flamy69.flamyplayer.network.SmbAddress
 import io.github.flamy69.flamyplayer.network.SmbEntry
@@ -47,6 +53,9 @@ sealed interface VideoLocation {
 
     /** A folder of a network location; [path] is relative to the root of that location. */
     data class Network(val serverId: String, val path: List<String>) : VideoLocation
+
+    /** A folder of a media server; [path] leads to it from the top and is empty there. */
+    data class Stream(val server: MediaServer, val path: List<MediaFolder>) : VideoLocation
 }
 
 /** The content of the network folder that is open. */
@@ -56,7 +65,14 @@ sealed interface NetworkListing {
     class Failed(val reason: SmbException.Reason, val detail: String) : NetworkListing
 }
 
-/** The search for computers and NAS boxes on the local network. */
+/** The content of the folder of a media server that is open. */
+sealed interface StreamListing {
+    data object Loading : StreamListing
+    class Ready(val entries: List<MediaEntry>) : StreamListing
+    class Failed(val detail: String) : StreamListing
+}
+
+/** The search for computers, NAS boxes and media servers on the local network. */
 sealed interface Discovery {
     /** Not searched yet. */
     data object Idle : Discovery
@@ -64,7 +80,7 @@ sealed interface Discovery {
 
     /** The phone is not on Wi-Fi, so there is no local network to search. */
     data object NoWifi : Discovery
-    class Done(val devices: List<FoundDevice>) : Discovery
+    class Done(val devices: List<FoundDevice>, val mediaServers: List<MediaServer>) : Discovery
 }
 
 /** Access to devices on the local network needs the user's consent from Android 17 on. */
@@ -98,6 +114,9 @@ class VideoBrowser(private val app: FlamyApp, private val scope: CoroutineScope)
     private val _listing = MutableStateFlow<NetworkListing>(NetworkListing.Loading)
     val listing: StateFlow<NetworkListing> = _listing.asStateFlow()
 
+    private val _streamListing = MutableStateFlow<StreamListing>(StreamListing.Loading)
+    val streamListing: StateFlow<StreamListing> = _streamListing.asStateFlow()
+
     private val _discovery = MutableStateFlow<Discovery>(Discovery.Idle)
 
     /** Machines with shared folders that were found on the local network. */
@@ -107,6 +126,7 @@ class VideoBrowser(private val app: FlamyApp, private val scope: CoroutineScope)
 
     /** Folders seen in this session; going back up shows them without asking the server again. */
     private val cache = HashMap<VideoLocation.Network, List<SmbEntry>>()
+    private val streamCache = HashMap<VideoLocation.Stream, List<MediaEntry>>()
 
     private var deviceJob: Job? = null
     private var listJob: Job? = null
@@ -134,12 +154,15 @@ class VideoBrowser(private val app: FlamyApp, private val scope: CoroutineScope)
             } catch (e: CancellationException) {
                 throw e
             } catch (_: Exception) {
-                emptyList()
+                NetworkScan(emptyList(), emptyList())
             }
             _discovery.value = if (found == null) {
                 Discovery.NoWifi
             } else {
-                Discovery.Done(found.sortedWith(compareBy(NaturalOrder) { it.host }))
+                Discovery.Done(
+                    devices = found.devices.sortedWith(compareBy(NaturalOrder) { it.host }),
+                    mediaServers = found.mediaServers.sortedWith(compareBy(NaturalOrder) { it.name }),
+                )
             }
         }
     }
@@ -151,6 +174,15 @@ class VideoBrowser(private val app: FlamyApp, private val scope: CoroutineScope)
     /** Opens a network location where the user left it the last time. */
     fun openServer(server: SmbServer) {
         show(VideoLocation.Network(server.id, settings.lastPath(server.id)), fallBackToRoot = true)
+    }
+
+    fun openMediaServer(server: MediaServer) {
+        showStream(VideoLocation.Stream(server, emptyList()))
+    }
+
+    fun openStreamFolder(folder: MediaEntry) {
+        val current = _location.value as? VideoLocation.Stream ?: return
+        showStream(current.copy(path = current.path + MediaFolder(folder.id, folder.title)))
     }
 
     fun openDirectory(name: String) {
@@ -169,38 +201,44 @@ class VideoBrowser(private val app: FlamyApp, private val scope: CoroutineScope)
             } else {
                 show(current.copy(path = current.path.dropLast(1)))
             }
+            is VideoLocation.Stream -> if (current.path.isEmpty()) {
+                listJob?.cancel()
+                _location.value = VideoLocation.Home
+            } else {
+                showStream(current.copy(path = current.path.dropLast(1)))
+            }
         }
         return true
     }
 
     /** Asks the server for the open folder again. */
     fun reload() {
-        val current = _location.value as? VideoLocation.Network ?: return
-        cache.remove(current)
-        show(current)
+        when (val current = _location.value) {
+            is VideoLocation.Network -> {
+                cache.remove(current)
+                show(current)
+            }
+            is VideoLocation.Stream -> {
+                streamCache.remove(current)
+                showStream(current)
+            }
+            else -> Unit
+        }
     }
 
     /**
      * Saves a new or edited network location and, if it is new, opens it. Returns `false` if
-     * [address] cannot be understood. An empty [password] keeps the stored one, or takes over
-     * the one of [passwordFrom] for a new location, unless there is no user name either.
+     * [address] cannot be understood. An empty [password] keeps the stored one, unless the user
+     * name was removed as well.
      */
-    fun saveServer(
-        existing: SmbServer?,
-        name: String,
-        address: String,
-        user: String,
-        password: String,
-        passwordFrom: SmbServer? = null,
-    ): Boolean {
+    fun saveServer(existing: SmbServer?, name: String, address: String, user: String, password: String): Boolean {
         val (host, root) = SmbAddress.parse(address) ?: return false
         val id = existing?.id ?: UUID.randomUUID().toString()
         scope.launch {
             val secret = when {
                 user.isBlank() -> ""
                 password.isNotEmpty() -> withContext(Dispatchers.IO) { SecretStore.encrypt(password) }.orEmpty()
-                // Copied as it is stored, encrypted; the password itself is never read back.
-                else -> (existing ?: passwordFrom)?.secret.orEmpty()
+                else -> existing?.secret.orEmpty()
             }
             val server = SmbServer(id, name.trim(), host, root, user.trim(), secret)
             if (existing != null && (existing.host != host || existing.root != root)) {
@@ -258,6 +296,26 @@ class VideoBrowser(private val app: FlamyApp, private val scope: CoroutineScope)
         play(context, items, videos.indexOf(entry))
     }
 
+    /** Plays [entry] of the open media server folder; the other videos of the folder follow it. */
+    fun playStreamVideo(context: Context, entry: MediaEntry) {
+        val current = _location.value as? VideoLocation.Stream ?: return
+        val entries = (_streamListing.value as? StreamListing.Ready)?.entries ?: return
+        val videos = entries.filter { !it.isFolder && it.url != null }
+        val items = videos.map { video ->
+            VideoItem(
+                uri = video.url.orEmpty().toUri(),
+                title = video.title,
+                key = streamKey(current.server, video),
+                // A media server only hands out what is inside the video file.
+                subtitles = SubtitleSource.None,
+            )
+        }
+        play(context, items, videos.indexOf(entry))
+    }
+
+    /** The key under which the position in a video of a media server is remembered. */
+    fun streamKey(server: MediaServer, entry: MediaEntry): String = "stream:" + server.id + "/" + entry.id
+
     /** The key under which the position in a network video is remembered. */
     fun networkKey(serverId: String, directory: List<String>, fileName: String): String =
         SmbUri.build(serverId, directory + fileName).toString()
@@ -295,6 +353,31 @@ class VideoBrowser(private val app: FlamyApp, private val scope: CoroutineScope)
                 throw e
             } catch (e: Exception) {
                 _listing.value = NetworkListing.Failed(SmbException.Reason.OTHER, e.toString())
+            }
+        }
+    }
+
+    private fun showStream(target: VideoLocation.Stream) {
+        listJob?.cancel()
+        _location.value = target
+
+        streamCache[target]?.let {
+            _streamListing.value = StreamListing.Ready(it)
+            return
+        }
+        _streamListing.value = StreamListing.Loading
+        listJob = scope.launch {
+            try {
+                val folder = target.path.lastOrNull()?.id ?: Dlna.ROOT
+                val entries = withContext(Dispatchers.IO) { Dlna.browse(target.server, folder) }
+                streamCache[target] = entries
+                _streamListing.value = StreamListing.Ready(entries)
+            } catch (e: CancellationException) {
+                throw e
+            } catch (e: Exception) {
+                _streamListing.value = StreamListing.Failed(
+                    listOfNotNull(e.javaClass.simpleName.ifEmpty { null }, e.message).joinToString(": "),
+                )
             }
         }
     }

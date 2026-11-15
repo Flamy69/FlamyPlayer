@@ -63,6 +63,13 @@
     <string name="cd_hide_password">Skrýt heslo</string>
 
     <string name="tab_video">Video</string>
+    <string name="tab_radio">Rádio</string>
+    <string name="radio_favorites">Oblíbené</string>
+    <string name="radio_all">Všechny stanice</string>
+    <string name="radio_search_hint">Hledat stanice</string>
+    <string name="radio_failed">Stanici teď nejde přehrát</string>
+    <string name="cd_favorite_add">Přidat k oblíbeným</string>
+    <string name="cd_favorite_remove">Odebrat z oblíbených</string>
     <string name="action_retry">Zkusit znovu</string>
     <string name="action_save">Uložit</string>
     <string name="action_cancel">Zrušit</string>
@@ -74,9 +81,11 @@
     <string name="video_add_network">Přidat síťovou složku</string>
     <string name="video_add_network_hint">Zadat adresu počítače nebo NASu ručně</string>
     <string name="video_find_devices">Prohledat síť</string>
-    <string name="video_found_searching">Hledám počítače a NASy ve vaší síti…</string>
-    <string name="video_found_none">Ve vaší síti nebyl nalezen žádný počítač ani NAS se sdílenými složkami. Počítač se zde objeví, jen když sdílí aspoň jednu složku a jeho firewall povoluje sdílení souborů.</string>
+    <string name="video_found_searching">Hledám počítače, NASy a proudy médií ve vaší síti…</string>
+    <string name="video_found_none">Ve vaší síti se nic nenašlo. Počítač se zde objeví, když sdílí složku nebo má zapnutý proud médií a jeho firewall to povoluje.</string>
     <string name="video_found_no_wifi">Připojte telefon k Wi-Fi, aby bylo možné najít počítače a NASy ve vaší síti.</string>
+    <string name="video_media_server">Proud médií</string>
+    <string name="stream_error">Server s proudem médií neodpověděl podle očekávání. Zkontrolujte, že je počítač zapnutý a že má tento telefon proud médií povolený.</string>
     <string name="video_permission_text">FlamyPlayer potřebuje oprávnění, aby viděl videa v tomto zařízení.</string>
     <string name="video_none_on_device">V tomto zařízení nebyla nalezena žádná videa.</string>
     <string name="video_folder_empty_title">Žádná videa</string>
@@ -92,9 +101,7 @@
     <string name="network_user">Uživatelské jméno</string>
     <string name="network_user_hint">Nechte prázdné pro přihlášení jako host</string>
     <string name="network_password">Heslo</string>
-    <string name="network_password_keep">Nechte prázdné, pokud se heslo nemění</string>
-    <string name="network_password_same_as">Nechte prázdné pro stejné heslo jako u %1$s</string>
-    <string name="network_copy_from">Převzít nastavení z</string>
+    <string name="network_password_unchanged">Beze změny</string>
     <string name="network_permission_text">FlamyPlayer potřebuje oprávnění připojovat se k zařízením v místní síti.</string>
     <string name="network_error_title">Složku se nepodařilo otevřít</string>
     <string name="network_error_unknown_host">Zařízení s tímto názvem se v síti nepodařilo najít. Zkontrolujte název, nebo místo něj zadejte IP adresu zařízení.</string>

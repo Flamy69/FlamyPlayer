@@ -15,6 +15,9 @@ class VideoItem(
 /** Where to look for subtitle files that belong to a video. */
 sealed interface SubtitleSource {
 
+    /** Nowhere: only the subtitles inside the video file are there. */
+    data object None : SubtitleSource
+
     /** A file on the device; subtitles are looked up next to it. */
     class Device(val videoPath: String) : SubtitleSource
 

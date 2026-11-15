@@ -8,7 +8,6 @@ import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -42,7 +41,6 @@ import androidx.compose.material.icons.rounded.VisibilityOff
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.FilledTonalButton
-import androidx.compose.material3.FilterChip
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -76,7 +74,6 @@ import io.github.flamy69.flamyplayer.R
 import io.github.flamy69.flamyplayer.data.VideoFiles
 import io.github.flamy69.flamyplayer.data.VideoFolder
 import io.github.flamy69.flamyplayer.data.VideoLibrary
-import io.github.flamy69.flamyplayer.network.SmbAddress
 import io.github.flamy69.flamyplayer.network.SmbException
 import io.github.flamy69.flamyplayer.network.SmbServer
 import io.github.flamy69.flamyplayer.video.VideoPlayerViewModel
@@ -93,6 +90,7 @@ fun VideoScreen(browser: VideoBrowser, onAddServer: (address: String) -> Unit, o
         VideoLocation.Home -> VideoHome(browser, onAddServer, onEditServer)
         is VideoLocation.Device -> DeviceFolder(browser, current.folder)
         is VideoLocation.Network -> NetworkFolder(browser, current)
+        is VideoLocation.Stream -> StreamFolder(browser, current)
     }
 }
 
@@ -195,11 +193,20 @@ private fun VideoHome(
                 Hint(stringResource(R.string.video_found_no_wifi))
             }
 
-            is Discovery.Done -> if (found.devices.isEmpty()) {
+            is Discovery.Done -> if (found.devices.isEmpty() && found.mediaServers.isEmpty()) {
                 item(key = "found-none", contentType = "hint") {
                     Hint(stringResource(R.string.video_found_none))
                 }
             } else {
+                // Media servers need no sign-in and nothing to be saved: tap and browse.
+                items(found.mediaServers, key = { "stream:" + it.location }, contentType = { "stream" }) { server ->
+                    BrowserRow(
+                        icon = Icons.Rounded.VideoLibrary,
+                        title = server.name,
+                        subtitle = stringResource(R.string.video_media_server) + " · " + server.address,
+                        onClick = { browser.openMediaServer(server) },
+                    )
+                }
                 // A device that was saved as a whole is listed above already. One that only has
                 // single folders saved stays here, for adding more of its folders.
                 val fresh = found.devices.filter { device ->
@@ -374,6 +381,60 @@ private fun NetworkFolder(browser: VideoBrowser, location: VideoLocation.Network
 }
 
 @Composable
+private fun StreamFolder(browser: VideoBrowser, location: VideoLocation.Stream) {
+    val listing by browser.streamListing.collectAsStateWithLifecycle()
+    val positions by browser.settings.positions.collectAsStateWithLifecycle()
+    val context = LocalContext.current
+
+    when (val current = listing) {
+        StreamListing.Loading -> Loading()
+
+        is StreamListing.Failed -> EmptyState(
+            icon = Icons.Rounded.CloudOff,
+            title = stringResource(R.string.network_error_title),
+            text = stringResource(R.string.stream_error),
+            buttonText = stringResource(R.string.action_retry),
+            onButtonClick = browser::reload,
+            detail = current.detail,
+        )
+
+        is StreamListing.Ready -> if (current.entries.isEmpty()) {
+            EmptyState(
+                icon = Icons.Rounded.VideoLibrary,
+                title = stringResource(R.string.video_folder_empty_title),
+                text = stringResource(R.string.video_folder_empty_text),
+            )
+        } else {
+            LazyColumn(Modifier.fillMaxSize()) {
+                // By position: a server may hand out the same item more than once.
+                items(current.entries.size, contentType = { current.entries[it].isFolder }) { index ->
+                    val entry = current.entries[index]
+                    if (entry.isFolder) {
+                        BrowserRow(
+                            icon = Icons.Rounded.Folder,
+                            title = entry.title,
+                            subtitle = "",
+                            onClick = { browser.openStreamFolder(entry) },
+                        )
+                    } else {
+                        BrowserRow(
+                            icon = Icons.Rounded.Movie,
+                            title = entry.title,
+                            subtitle = listOfNotNull(
+                                formatTime(entry.durationMs).takeIf { entry.durationMs > 0 },
+                                formatSize(entry.sizeBytes).takeIf { entry.sizeBytes > 0 },
+                            ).joinToString(" · "),
+                            resumeAtMs = positions[browser.streamKey(location.server, entry)],
+                            onClick = { browser.playStreamVideo(context, entry) },
+                        )
+                    }
+                }
+            }
+        }
+    }
+}
+
+@Composable
 private fun NetworkError(reason: SmbException.Reason, detail: String, listingShares: Boolean, onRetry: () -> Unit) {
     val context = LocalContext.current
     val permissionMissing = reason == SmbException.Reason.UNREACHABLE && !LocalNetwork.isAllowed(context)
@@ -401,38 +462,21 @@ private fun NetworkError(reason: SmbException.Reason, detail: String, listingSha
     )
 }
 
-/**
- * Dialog for adding a network location, or for editing or removing an existing one.
- *
- * A new location can take over the settings of one of the [templates], the locations saved
- * so far: address, user name and password. The password is taken over as it is stored and is
- * never shown. A new location on a machine that has a saved one starts with its sign-in.
- *
- * @param onSave `passwordFrom` is the location whose password applies if none was typed
- */
+/** Dialog for adding a network location, or for editing or removing an existing one. */
 @Composable
 fun ServerDialog(
     server: SmbServer?,
     initialAddress: String,
-    templates: List<SmbServer>,
-    onSave: (name: String, address: String, user: String, password: String, passwordFrom: SmbServer?) -> Boolean,
+    onSave: (name: String, address: String, user: String, password: String) -> Boolean,
     onRemove: () -> Unit,
     onDismiss: () -> Unit,
 ) {
-    val sameMachine = remember {
-        val host = SmbAddress.parse(initialAddress)?.first
-        if (server != null || host == null) null else templates.firstOrNull { it.host.equals(host, ignoreCase = true) }
-    }
     var address by rememberSaveable { mutableStateOf(server?.address ?: initialAddress) }
     var passwordVisible by rememberSaveable { mutableStateOf(false) }
     var name by rememberSaveable { mutableStateOf(server?.name.orEmpty()) }
-    var user by rememberSaveable { mutableStateOf((server ?: sameMachine)?.user.orEmpty()) }
+    var user by rememberSaveable { mutableStateOf(server?.user.orEmpty()) }
     var password by rememberSaveable { mutableStateOf("") }
     var addressInvalid by rememberSaveable { mutableStateOf(false) }
-    var templateId by rememberSaveable { mutableStateOf(sameMachine?.id) }
-    val template = if (server == null) templates.firstOrNull { it.id == templateId } else null
-    // The saved password that applies while the field is left empty, and whose it is.
-    val keptPassword = (server ?: template)?.takeIf { it.secret.isNotEmpty() && password.isEmpty() }
 
     val plainText = KeyboardOptions(
         capitalization = KeyboardCapitalization.None,
@@ -450,35 +494,6 @@ fun ServerDialog(
                 modifier = Modifier.verticalScroll(rememberScrollState()),
                 verticalArrangement = Arrangement.spacedBy(4.dp),
             ) {
-                if (server == null && templates.isNotEmpty()) {
-                    Text(
-                        text = stringResource(R.string.network_copy_from),
-                        style = MaterialTheme.typography.labelMedium,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    )
-                    Row(
-                        modifier = Modifier.horizontalScroll(rememberScrollState()),
-                        horizontalArrangement = Arrangement.spacedBy(8.dp),
-                    ) {
-                        for (saved in templates) {
-                            FilterChip(
-                                selected = saved.id == templateId,
-                                onClick = {
-                                    if (saved.id == templateId) {
-                                        templateId = null
-                                    } else {
-                                        templateId = saved.id
-                                        address = saved.address
-                                        user = saved.user
-                                        password = ""
-                                        addressInvalid = false
-                                    }
-                                },
-                                label = { Text(saved.title, maxLines = 1) },
-                            )
-                        }
-                    }
-                }
                 OutlinedTextField(
                     value = address,
                     onValueChange = {
@@ -511,16 +526,8 @@ fun ServerDialog(
                     value = password,
                     onValueChange = { password = it },
                     label = { Text(stringResource(R.string.network_password)) },
-                    supportingText = keptPassword?.let { kept ->
-                        {
-                            Text(
-                                if (server != null) {
-                                    stringResource(R.string.network_password_keep)
-                                } else {
-                                    stringResource(R.string.network_password_same_as, kept.title)
-                                },
-                            )
-                        }
+                    placeholder = {
+                        if (!server?.secret.isNullOrEmpty()) Text(stringResource(R.string.network_password_unchanged))
                     },
                     singleLine = true,
                     visualTransformation = if (passwordVisible) {
@@ -559,7 +566,7 @@ fun ServerDialog(
         confirmButton = {
             TextButton(
                 onClick = {
-                    if (onSave(name, address, user, password, template)) onDismiss() else addressInvalid = true
+                    if (onSave(name, address, user, password)) onDismiss() else addressInvalid = true
                 },
             ) {
                 Text(stringResource(R.string.action_save))

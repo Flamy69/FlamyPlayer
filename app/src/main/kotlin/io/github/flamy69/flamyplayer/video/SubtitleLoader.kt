@@ -42,6 +42,7 @@ class SubtitleLoader(private val context: Context, private val smb: SmbClient) {
 
     fun load(item: VideoItem): List<LoadedSubtitle> = try {
         val found = when (val source = item.subtitles) {
+            SubtitleSource.None -> emptyList()
             is SubtitleSource.Device -> loadFromDevice(source)
             is SubtitleSource.Network -> loadFromNetwork(source)
         }

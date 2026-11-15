@@ -2,6 +2,7 @@ package io.github.flamy69.flamyplayer.network
 
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
+import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Test
 import java.net.InetAddress
@@ -45,6 +46,14 @@ class DiscoveryTest {
     }
 
     @Test
+    fun asksASingleMachineDirectly() {
+        val request = String(Ssdp.request("192.168.1.20"), Charsets.US_ASCII)
+        assertTrue("HOST: 192.168.1.20:1900\r\n" in request)
+        // The time to answer only applies to questions that go to everybody.
+        assertFalse("MX:" in request)
+    }
+
+    @Test
     fun recognizesTheAnswerOfAMediaServer() {
         val answer = "HTTP/1.1 200 OK\r\n" +
             "CACHE-CONTROL: max-age=1800\r\n" +
@@ -52,6 +61,9 @@ class DiscoveryTest {
             "st:urn:schemas-upnp-org:device:MediaServer:1\r\n" +
             "USN: uuid:1234::urn:schemas-upnp-org:device:MediaServer:1\r\n\r\n"
         assertTrue(Ssdp.isAnswer(answer))
+        assertEquals("http://192.168.1.20:2869/upnphost/udhisapi.dll?content=uuid:1234", Ssdp.location(answer))
+        assertNull(Ssdp.location("HTTP/1.1 200 OK\r\nST: x\r\n\r\n"))
+        assertNull(Ssdp.location("HTTP/1.1 200 OK\r\nLocation: ftp://192.168.1.20/\r\n\r\n"))
     }
 
     @Test
