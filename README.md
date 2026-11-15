@@ -41,6 +41,8 @@ internet is the stream of the radio station you choose to listen to.
   letters survive
 - Rotation lock and manual rotation, brightness and volume by swiping, double tap to skip
   10 seconds, choice of audio track, resume where you stopped
+- DTS, AC3, E-AC3 and TrueHD sound plays even on phones without a decoder for it, through the
+  FFmpeg decoders that come with the app
 - Internet radio: about 180 Czech stations, favorites, search, the song that is on air where
   the station tells, and "next" / "previous" on the headset to change the station
 - Light and dark theme, English and Czech
@@ -88,8 +90,9 @@ In the video player:
 
 ## Supported formats
 
-Playback is handled by [Media3 ExoPlayer](https://developer.android.com/media/media3/exoplayer)
-with the decoders built into Android:
+Playback is handled by [Media3 ExoPlayer](https://developer.android.com/media/media3/exoplayer).
+The decoders built into Android are used wherever they can play a file; for everything else
+the app brings FFmpeg decoders along.
 
 | Format | Typical extensions |
 | --- | --- |
@@ -100,12 +103,14 @@ with the decoders built into Android:
 | Opus | `.opus`, `.ogg` |
 | WAV | `.wav` |
 
-Other formats play if the device has a decoder for them. ALAC and WMA usually do not.
+ALAC, AC3 and MP2 files play through FFmpeg. WMA does not play.
 
 Video works the same way: MKV, MP4/MOV, WebM, AVI, MPEG-TS and FLV files are read by ExoPlayer and
 decoded by the phone. H.264 plays everywhere; H.265, VP9 and AV1 on any reasonably recent phone.
-Many phones have no decoder for AC3 or DTS sound: such a video plays silently, and the app says
-so. Subtitles inside the file (text or picture based) and separate `.srt`, `.ass`, `.ssa` and
+Sound in DTS, DTS-HD, AC3, E-AC3, TrueHD or MP2, which most phones cannot decode, is decoded by
+FFmpeg. So is the picture if the phone has no decoder for it (MPEG-2, or H.265 and AV1 on older
+phones); that runs on the processor and costs more battery than the phone's own decoders.
+Subtitles inside the file (text or picture based) and separate `.srt`, `.ass`, `.ssa` and
 `.vtt` files are supported.
 
 ## Why it is fast
@@ -222,4 +227,9 @@ their addresses now and then: one that stopped working is fixed by the next rele
 
 ## License
 
-[MIT](LICENSE)
+The source code of FlamyPlayer is under the [MIT](LICENSE) license.
+
+The app includes [NextLib](https://github.com/anilbeesetti/nextlib) with FFmpeg for decoding,
+which is licensed under the GNU General Public License, version 3. The APK files of the releases
+contain that library and are therefore distributed under the terms of the
+[GPL-3.0](https://www.gnu.org/licenses/gpl-3.0.html).

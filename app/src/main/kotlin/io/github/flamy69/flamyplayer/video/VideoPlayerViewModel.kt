@@ -20,9 +20,10 @@ import androidx.media3.common.text.CueGroup
 import androidx.media3.common.util.UnstableApi
 import androidx.media3.datasource.DefaultDataSource
 import androidx.media3.datasource.DefaultHttpDataSource
-import androidx.media3.exoplayer.DefaultRenderersFactory
 import androidx.media3.exoplayer.ExoPlayer
 import androidx.media3.exoplayer.source.DefaultMediaSourceFactory
+import androidx.media3.extractor.DefaultExtractorsFactory
+import androidx.media3.extractor.ts.DefaultTsPayloadReaderFactory
 import androidx.media3.session.MediaSession
 import io.github.flamy69.flamyplayer.FlamyApp
 import io.github.flamy69.flamyplayer.R
@@ -30,6 +31,7 @@ import io.github.flamy69.flamyplayer.data.VideoSettings
 import io.github.flamy69.flamyplayer.network.NetworkDataSource
 import io.github.flamy69.flamyplayer.network.SmbDataSource
 import io.github.flamy69.flamyplayer.network.SmbException
+import io.github.flamy69.flamyplayer.playback.MediaRenderersFactory
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
@@ -94,7 +96,7 @@ class VideoPlayerViewModel(app: Application) : AndroidViewModel(app) {
     private var loadJob: Job? = null
     private var session: MediaSession? = null
 
-    val player: ExoPlayer = ExoPlayer.Builder(app, DefaultRenderersFactory(app).setEnableDecoderFallback(true))
+    val player: ExoPlayer = ExoPlayer.Builder(app, MediaRenderersFactory(app))
         .setMediaSourceFactory(
             DefaultMediaSourceFactory(
                 // Files and content URIs are handled by the default source; shared folders
@@ -106,6 +108,11 @@ class VideoPlayerViewModel(app: Application) : AndroidViewModel(app) {
                         http = DefaultHttpDataSource.Factory().setAllowCrossProtocolRedirects(true),
                     ),
                 ),
+                DefaultExtractorsFactory()
+                    // DTS sound in Blu-ray style files (.m2ts) is not looked for otherwise.
+                    .setTsExtractorFlags(DefaultTsPayloadReaderFactory.FLAG_ENABLE_HDMV_DTS_AUDIO_STREAMS)
+                    // Lets files without a seek table be seeked in all the same.
+                    .setConstantBitrateSeekingEnabled(true),
             ),
         )
         .setAudioAttributes(

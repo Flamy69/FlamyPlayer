@@ -7,6 +7,9 @@
     @net.engio.mbassy.listener.Handler <methods>;
 }
 -keep class com.hierynomus.** { *; }
+
+# The FFmpeg decoders: their native code reaches back into these classes by name.
+-keep class io.github.anilbeesetti.nextlib.media3ext.ffdecoder.** { *; }
 -keep class com.rapid7.client.dcerpc.** { *; }
 
 # Optional features that are never used on Android: Kerberos sign-in, expression language

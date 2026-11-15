@@ -89,7 +89,7 @@ class PlaybackService : MediaSessionService() {
         settings = (application as FlamyApp).settings
         stats = (application as FlamyApp).trackStats
 
-        player = ExoPlayer.Builder(this)
+        player = ExoPlayer.Builder(this, MediaRenderersFactory(this))
             .setAudioAttributes(audioAttributes(speech = false), /* handleAudioFocus = */ true)
             .setHandleAudioBecomingNoisy(true)
             // Radio streams are behind redirects that may switch between HTTPS and HTTP.

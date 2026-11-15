@@ -10,7 +10,7 @@ object VideoFiles {
 
     private val extensions = setOf(
         "mkv", "mp4", "m4v", "mov", "avi", "webm", "ts", "m2ts", "mts",
-        "mpg", "mpeg", "vob", "flv", "3gp", "wmv", "divx",
+        "mpg", "mpeg", "m2v", "vob", "flv", "3gp", "wmv", "divx", "ogv",
     )
 
     fun isVideo(fileName: String): Boolean = extension(fileName) in extensions

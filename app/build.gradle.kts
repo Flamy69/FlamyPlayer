@@ -34,6 +34,25 @@ android {
         targetSdk = 37
         versionCode = appVersionCode
         versionName = appVersion
+
+        // The FFmpeg decoders are native code. Phones are ARM; leaving out the builds for
+        // x86 emulators halves what they add to the download.
+        ndk {
+            abiFilters += listOf("arm64-v8a", "armeabi-v7a")
+        }
+    }
+
+    packaging {
+        jniLibs {
+            // Compressed inside the APK: the download is 10 MB smaller, and the phone unpacks
+            // only the libraries for its own processor.
+            useLegacyPackaging = true
+        }
+    }
+
+    lint {
+        // Leaving out the x86 builds of the decoders is deliberate, see abiFilters above.
+        disable += "ChromeOsAbiSupport"
     }
 
     signingConfigs {
@@ -78,6 +97,8 @@ dependencies {
     implementation(libs.media3.exoplayer)
     implementation(libs.media3.session)
     implementation(libs.media3.ui)
+    // FFmpeg decoders for the sound and picture formats phones have no decoder for (DTS, AC3...).
+    implementation(libs.nextlib.media3ext)
 
     // SMB2/3 client for playing video from Windows shares and NAS boxes, plus the RPC calls
     // needed to list the shares of a server.
