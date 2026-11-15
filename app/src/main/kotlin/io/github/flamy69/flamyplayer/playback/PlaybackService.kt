@@ -22,6 +22,9 @@ import io.github.flamy69.flamyplayer.FlamyApp
 import io.github.flamy69.flamyplayer.MainActivity
 import io.github.flamy69.flamyplayer.R
 import io.github.flamy69.flamyplayer.data.Settings
+import kotlinx.coroutines.MainScope
+import kotlinx.coroutines.cancel
+import kotlinx.coroutines.launch
 
 /**
  * Owns the player and publishes it as a media session. The session is what gives the app its
@@ -33,6 +36,9 @@ class PlaybackService : MediaSessionService() {
     private lateinit var player: ExoPlayer
     private lateinit var settings: Settings
     private var session: MediaSession? = null
+
+    private val scope = MainScope()
+    private val boost = VolumeBoost()
 
     private val handler = Handler(Looper.getMainLooper())
     private var consecutiveErrors = 0
@@ -56,6 +62,9 @@ class PlaybackService : MediaSessionService() {
             .setSeekForwardIncrementMs(SEEK_FORWARD_MS)
             .build()
         player.addListener(playerListener)
+        boost.attach(player.audioSessionId)
+        // Also follows the setting while it is being changed during playback.
+        scope.launch { settings.boosts.collect { applyBoost() } }
 
         setMediaNotificationProvider(
             DefaultMediaNotificationProvider.Builder(this).build().apply {
@@ -88,6 +97,8 @@ class PlaybackService : MediaSessionService() {
 
     override fun onDestroy() {
         handler.removeCallbacks(progressTicker)
+        scope.cancel()
+        boost.release()
         saveBookProgress()
         PlaybackQueue.active = null
         session?.release()
@@ -139,6 +150,11 @@ class PlaybackService : MediaSessionService() {
 
         override fun onMediaItemTransition(mediaItem: MediaItem?, reason: Int) {
             saveBookProgress()
+            applyBoost()
+        }
+
+        override fun onAudioSessionIdChanged(audioSessionId: Int) {
+            boost.attach(audioSessionId)
         }
 
         override fun onPositionDiscontinuity(
@@ -179,6 +195,12 @@ class PlaybackService : MediaSessionService() {
         } else {
             settings.saveBookProgress(bookFolder, trackId, player.currentPosition)
         }
+    }
+
+    /** Plays the current audiobook, or music, as much louder as the listener asked for. */
+    private fun applyBoost() {
+        val bookFolder = player.currentMediaItem?.mediaMetadata?.extras?.getString(PlaybackQueue.EXTRA_BOOK_FOLDER)
+        boost.setGain(settings.boosts.value[Settings.boostKey(bookFolder)] ?: 0)
     }
 
     private fun audioAttributes(speech: Boolean) = AudioAttributes.Builder()

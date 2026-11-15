@@ -57,6 +57,9 @@ import io.github.flamy69.flamyplayer.playback.PlayerState
 
 private val BookSpeeds = listOf(0.75f, 1f, 1.25f, 1.5f, 1.75f, 2f)
 
+/** Amplification in decibels; every step sounds clearly louder than the one before. */
+private val Boosts = listOf(0, 4, 8, 12, 16, 20)
+
 /** The strip above the bottom bar: what is playing, with play/pause and next. */
 @Composable
 fun MiniPlayer(
@@ -122,6 +125,8 @@ fun NowPlayingScreen(
     onToggleShuffle: () -> Unit,
     onCycleRepeat: () -> Unit,
     onSpeedChange: (Float) -> Unit,
+    boostDb: Int,
+    onBoostChange: (Int) -> Unit,
 ) {
     val isBook = state.bookFolder != null
     Surface(color = MaterialTheme.colorScheme.background, modifier = Modifier.fillMaxSize()) {
@@ -215,9 +220,14 @@ fun NowPlayingScreen(
                 }
             }
 
-            // Reserve the row in both modes so that the controls do not jump between music and books.
-            Box(Modifier.height(48.dp), contentAlignment = Alignment.Center) {
+            // The row is there in both modes, so the controls do not jump between music and books.
+            Row(
+                modifier = Modifier.height(48.dp),
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
                 if (isBook) SpeedButton(state.speed, onSpeedChange)
+                BoostButton(boostDb, onBoostChange)
             }
         }
     }
@@ -290,6 +300,43 @@ private fun PlayPauseIcon(isPlaying: Boolean, modifier: Modifier = Modifier, tin
         modifier = modifier,
     )
 }
+
+/** Amplification for quiet recordings: kept per audiobook, and once for all music. */
+@Composable
+private fun BoostButton(boostDb: Int, onBoostChange: (Int) -> Unit) {
+    var expanded by remember { mutableStateOf(false) }
+    Box {
+        TextButton(onClick = { expanded = true }) {
+            Text(
+                text = boostLabel(boostDb),
+                style = MaterialTheme.typography.titleMedium,
+                color = if (boostDb > 0) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+            Spacer(Modifier.width(6.dp))
+            Text(stringResource(R.string.cd_boost), style = MaterialTheme.typography.bodyMedium)
+        }
+        DropdownMenu(expanded = expanded, onDismissRequest = { expanded = false }) {
+            for (option in Boosts) {
+                DropdownMenuItem(
+                    text = {
+                        Text(
+                            text = boostLabel(option),
+                            fontWeight = if (option == boostDb) FontWeight.Bold else FontWeight.Normal,
+                        )
+                    },
+                    onClick = {
+                        expanded = false
+                        onBoostChange(option)
+                    },
+                )
+            }
+        }
+    }
+}
+
+@Composable
+private fun boostLabel(decibels: Int): String =
+    if (decibels > 0) stringResource(R.string.boost_value, decibels) else stringResource(R.string.boost_off)
 
 @Composable
 private fun SpeedButton(speed: Float, onSpeedChange: (Float) -> Unit) {

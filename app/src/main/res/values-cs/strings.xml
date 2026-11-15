@@ -45,6 +45,8 @@
     <string name="duration_hours_minutes">%1$d h %2$d min</string>
     <string name="duration_minutes">%1$d min</string>
     <string name="speed_value">%1$s×</string>
+    <string name="boost_value">+%1$d dB</string>
+    <string name="boost_off">Vypnuto</string>
 
     <string name="cd_play">Přehrát</string>
     <string name="cd_pause">Pozastavit</string>
@@ -54,7 +56,8 @@
     <string name="cd_repeat">Opakování</string>
     <string name="cd_rewind">Zpět o 10 sekund</string>
     <string name="cd_forward">Vpřed o 30 sekund</string>
-    <string name="cd_speed">Rychlost přehrávání</string>
+    <string name="cd_speed">Rychlost</string>
+    <string name="cd_boost">Zesílení</string>
     <string name="cd_open_folder">Otevřít složku</string>
     <string name="cd_show_password">Zobrazit heslo</string>
     <string name="cd_hide_password">Skrýt heslo</string>
@@ -72,7 +75,7 @@
     <string name="video_add_network_hint">Zadat adresu počítače nebo NASu ručně</string>
     <string name="video_find_devices">Prohledat síť</string>
     <string name="video_found_searching">Hledám počítače a NASy ve vaší síti…</string>
-    <string name="video_found_none">Ve vaší síti nebyl nalezen žádný počítač ani NAS se sdílenými složkami.</string>
+    <string name="video_found_none">Ve vaší síti nebyl nalezen žádný počítač ani NAS se sdílenými složkami. Počítač se zde objeví, jen když sdílí aspoň jednu složku a jeho firewall povoluje sdílení souborů.</string>
     <string name="video_found_no_wifi">Připojte telefon k Wi-Fi, aby bylo možné najít počítače a NASy ve vaší síti.</string>
     <string name="video_permission_text">FlamyPlayer potřebuje oprávnění, aby viděl videa v tomto zařízení.</string>
     <string name="video_none_on_device">V tomto zařízení nebyla nalezena žádná videa.</string>
@@ -89,7 +92,9 @@
     <string name="network_user">Uživatelské jméno</string>
     <string name="network_user_hint">Nechte prázdné pro přihlášení jako host</string>
     <string name="network_password">Heslo</string>
-    <string name="network_password_unchanged">Beze změny</string>
+    <string name="network_password_keep">Nechte prázdné, pokud se heslo nemění</string>
+    <string name="network_password_same_as">Nechte prázdné pro stejné heslo jako u %1$s</string>
+    <string name="network_copy_from">Převzít nastavení z</string>
     <string name="network_permission_text">FlamyPlayer potřebuje oprávnění připojovat se k zařízením v místní síti.</string>
     <string name="network_error_title">Složku se nepodařilo otevřít</string>
     <string name="network_error_unknown_host">Zařízení s tímto názvem se v síti nepodařilo najít. Zkontrolujte název, nebo místo něj zadejte IP adresu zařízení.</string>

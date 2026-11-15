@@ -2,18 +2,15 @@ package io.github.flamy69.flamyplayer.network
 
 import android.content.Context
 import android.net.ConnectivityManager
+import android.net.Network
 import android.net.NetworkCapabilities
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
-import kotlinx.coroutines.coroutineScope
-import kotlinx.coroutines.sync.Semaphore
-import kotlinx.coroutines.sync.withPermit
+import kotlinx.coroutines.withContext
 import java.io.IOException
 import java.net.Inet4Address
 import java.net.InetAddress
-import java.net.InetSocketAddress
-import java.net.Socket
 import java.net.UnknownHostException
 import java.util.concurrent.ConcurrentHashMap
 
@@ -53,6 +50,9 @@ class FoundDevice(
 ) {
     /** What to save as the address: the name survives the device getting a new IP address. */
     val host: String get() = name ?: address
+
+    /** Whether [host], as saved with a network folder, means this device. */
+    fun isCalled(host: String): Boolean = host == address || host.equals(name, ignoreCase = true)
 }
 
 /**
@@ -67,27 +67,44 @@ class LocalNetworkScanner(context: Context) {
     private val known = ConcurrentHashMap<String, String>()
 
     /**
-     * Looks for machines with the file sharing port open. Returns `null` when the phone is not
-     * on Wi-Fi (or a wired network). Takes about two seconds.
+     * Looks for machines that share folders. Returns `null` when the phone is not on Wi-Fi (or
+     * a wired network). Takes two to four seconds.
+     *
+     * Two searches run side by side: the file sharing port of every address around the phone
+     * is tried, and the network is asked who streams media, the way a TV finds its sources.
+     * Machines that answer the second question get a second try at the first.
      */
     suspend fun scan(): List<FoundDevice>? {
-        val (address, prefixLength) = wifiAddress() ?: return null
-        val candidates = Subnet.neighbors(address, prefixLength)
-        val limit = Semaphore(PARALLEL_PROBES)
-        val found = coroutineScope {
-            candidates.map { candidate ->
-                async(Dispatchers.IO) {
-                    limit.withPermit {
-                        val target = Subnet.toAddress(candidate)
-                        if (isSharingFiles(target)) FoundDevice(NetBios.nameOf(target), target.hostAddress.orEmpty()) else null
+        val wifi = wifi() ?: return null
+        val own = Subnet.toAddress(wifi.address)
+        val neighbors = Subnet.neighbors(wifi.address, wifi.prefixLength).map(Subnet::toAddress)
+        val found = withContext(Dispatchers.IO) {
+            val streaming = async {
+                Ssdp.mediaServers { socket ->
+                    try {
+                        wifi.network.bindSocket(socket)
+                    } catch (_: IOException) {
+                        // Then the question goes out over whatever network Android prefers.
                     }
                 }
-            }.awaitAll().filterNotNull()
+            }
+            val sharing = PortScan.open(neighbors, SMB_PORT, PROBE_TIMEOUT_MS)
+            val missed = streaming.await().filter { it != own && it !in sharing }
+            (sharing + PortScan.open(missed, SMB_PORT, PROBE_TIMEOUT_MS))
+                .map { target -> async { describe(target) } }
+                .awaitAll()
         }
         for (device in found) {
             device.name?.let { known[it.uppercase()] = device.address }
         }
         return found
+    }
+
+    private fun describe(target: InetAddress): FoundDevice {
+        val address = target.hostAddress.orEmpty()
+        // A machine that keeps its name to itself may still be one that was connected to by name.
+        val name = NetBios.nameOf(target) ?: known.entries.firstOrNull { it.value == address }?.key
+        return FoundDevice(name, address)
     }
 
     /**
@@ -99,7 +116,7 @@ class LocalNetworkScanner(context: Context) {
         if (IPV4.matches(host)) return host
 
         if (NetBios.isValidName(host)) {
-            val broadcast = wifiAddress()?.let { (address, prefix) -> Subnet.toAddress(Subnet.broadcast(address, prefix)) }
+            val broadcast = wifi()?.let { Subnet.toAddress(Subnet.broadcast(it.address, it.prefixLength)) }
                 ?: Subnet.toAddress(-1)
             NetBios.resolve(host, broadcast)?.hostAddress?.let { address ->
                 known[host.uppercase()] = address
@@ -119,8 +136,11 @@ class LocalNetworkScanner(context: Context) {
         return known[host.uppercase()] ?: throw UnknownHostException(host)
     }
 
-    /** The phone's IPv4 address on Wi-Fi or Ethernet and the length of its network prefix. */
-    private fun wifiAddress(): Pair<Int, Int>? {
+    /** The local network of the phone: its IPv4 address there and the length of the prefix. */
+    private class Wifi(val network: Network, val address: Int, val prefixLength: Int)
+
+    /** The Wi-Fi or Ethernet network the phone is connected to. */
+    private fun wifi(): Wifi? {
         val manager = connectivity ?: return null
         @Suppress("DEPRECATION") // The replacement only reports the default network, which may be a VPN.
         for (network in manager.allNetworks) {
@@ -131,26 +151,16 @@ class LocalNetworkScanner(context: Context) {
             val link = manager.getLinkProperties(network)?.linkAddresses
                 ?.firstOrNull { it.address is Inet4Address }
                 ?: continue
-            return Subnet.toInt(link.address as Inet4Address) to link.prefixLength
+            return Wifi(network, Subnet.toInt(link.address as Inet4Address), link.prefixLength)
         }
         return null
     }
 
-    private fun isSharingFiles(address: InetAddress): Boolean = try {
-        Socket().use { socket ->
-            socket.connect(InetSocketAddress(address, SMB_PORT), PROBE_TIMEOUT_MS)
-            true
-        }
-    } catch (_: IOException) {
-        false
-    } catch (_: SecurityException) {
-        false
-    }
-
     private companion object {
         const val SMB_PORT = 445
-        const val PROBE_TIMEOUT_MS = 400
-        const val PARALLEL_PROBES = 64
+
+        /** Long enough for a sleepy Wi-Fi device, whose address is asked for again after a second. */
+        const val PROBE_TIMEOUT_MS = 1500
         val IPV4 = Regex("""\d{1,3}(\.\d{1,3}){3}""")
     }
 }

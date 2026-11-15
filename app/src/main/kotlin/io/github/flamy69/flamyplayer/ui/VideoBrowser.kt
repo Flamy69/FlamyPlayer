@@ -182,17 +182,25 @@ class VideoBrowser(private val app: FlamyApp, private val scope: CoroutineScope)
 
     /**
      * Saves a new or edited network location and, if it is new, opens it. Returns `false` if
-     * [address] cannot be understood. An empty [password] keeps the stored one, unless the user
-     * name was removed as well.
+     * [address] cannot be understood. An empty [password] keeps the stored one, or takes over
+     * the one of [passwordFrom] for a new location, unless there is no user name either.
      */
-    fun saveServer(existing: SmbServer?, name: String, address: String, user: String, password: String): Boolean {
+    fun saveServer(
+        existing: SmbServer?,
+        name: String,
+        address: String,
+        user: String,
+        password: String,
+        passwordFrom: SmbServer? = null,
+    ): Boolean {
         val (host, root) = SmbAddress.parse(address) ?: return false
         val id = existing?.id ?: UUID.randomUUID().toString()
         scope.launch {
             val secret = when {
                 user.isBlank() -> ""
                 password.isNotEmpty() -> withContext(Dispatchers.IO) { SecretStore.encrypt(password) }.orEmpty()
-                else -> existing?.secret.orEmpty()
+                // Copied as it is stored, encrypted; the password itself is never read back.
+                else -> (existing ?: passwordFrom)?.secret.orEmpty()
             }
             val server = SmbServer(id, name.trim(), host, root, user.trim(), secret)
             if (existing != null && (existing.host != host || existing.root != root)) {

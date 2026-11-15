@@ -9,8 +9,8 @@ A small, fast, folder-based media player for Android. It does three things:
 - **Video** – plays the videos on the phone and, over Wi-Fi, the ones in shared folders of a
   Windows PC or a NAS, with subtitles you can restyle and move.
 
-No accounts, no ads, no tracking. The only network connections the app ever makes are to the
-network folders you add yourself.
+No accounts, no ads, no tracking. The app never contacts the internet; it only talks to your own
+local network, to find the machines that share folders and to play from the ones you add.
 
 ## Features
 
@@ -19,6 +19,8 @@ network folders you add yourself.
 - Shuffle, repeat all / repeat one, search across title, artist, album and file name
 - Audiobooks keep their own position, with a progress bar per book, 10 s back / 30 s forward
   buttons and playback speed from 0.75× to 2×
+- Boost for quiet recordings and quiet headphones: up to +20 dB on top of the normal volume,
+  remembered for each audiobook separately (and once for music)
 - Natural file ordering, so `Chapter 2` comes before `Chapter 10`
 - Media notification and lock screen controls with cover art
 - Headset and Bluetooth buttons: play, pause, next, previous
@@ -55,7 +57,8 @@ Requires Android 8.0 or newer.
    computers and NAS boxes on your Wi-Fi that share folders. Tap one of them, or tap **+** and
    enter an address yourself, for example `192.168.1.10`, `NAS/video` or `\\PC\Films`; add the
    user name and password if the share needs them. Tap a video to play it; the other videos of
-   the folder follow.
+   the folder follow. When you add another folder, the settings of one you already have,
+   password included, can be copied with one tap.
 
 In the video player:
 
@@ -114,9 +117,11 @@ at a time, over a connection that stays open between requests; nothing is scanne
 advance. During playback the file is read in requests of up to 1 MB, which keeps a Wi-Fi link
 busy with data instead of round trips.
 
-Finding the machines on your network takes about two seconds: the app tries the file sharing
-port of every address of the phone's own Wi-Fi network (at most 254 of them) in parallel and
-asks the ones that answer for their name. It never looks beyond the local network.
+Finding the machines on your network takes two to four seconds: the app tries the file sharing
+port of every address of the phone's own Wi-Fi network (at most 254 of them) at the same time
+and asks the ones that answer for their name. Alongside, it asks the network which machines
+stream media, the way a TV finds its sources, and checks those for shared folders too. It never
+looks beyond the local network.
 
 ## Building
 

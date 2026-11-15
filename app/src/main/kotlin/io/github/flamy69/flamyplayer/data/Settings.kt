@@ -15,6 +15,7 @@ class Settings(context: Context) {
 
     private val prefs = context.getSharedPreferences("settings", Context.MODE_PRIVATE)
     private val progressPrefs = context.getSharedPreferences("book_progress", Context.MODE_PRIVATE)
+    private val boostPrefs = context.getSharedPreferences("boost", Context.MODE_PRIVATE)
 
     private val _musicFolders = MutableStateFlow(readFolders(KEY_MUSIC_FOLDERS))
     val musicFolders: StateFlow<Set<String>> = _musicFolders.asStateFlow()
@@ -33,6 +34,14 @@ class Settings(context: Context) {
 
     private val _bookProgress = MutableStateFlow(readProgress())
     val bookProgress: StateFlow<Map<String, BookProgress>> = _bookProgress.asStateFlow()
+
+    private val _boosts = MutableStateFlow(readBoosts())
+
+    /**
+     * How much louder to play, in decibels: one value per audiobook and one for music as a
+     * whole. Look values up under [boostKey]; what is missing is not amplified.
+     */
+    val boosts: StateFlow<Map<String, Int>> = _boosts.asStateFlow()
 
     var lastSection: Section
         get() = prefs.getString(KEY_SECTION, null).let { name -> Section.entries.firstOrNull { it.name == name } }
@@ -78,6 +87,26 @@ class Settings(context: Context) {
         progressPrefs.edit { remove(bookFolder) }
     }
 
+    /** Sets the amplification of the audiobook in [bookFolder], or of music if that is `null`. */
+    fun setBoost(bookFolder: String?, decibels: Int) {
+        val key = boostKey(bookFolder)
+        if (decibels > 0) {
+            _boosts.update { it + (key to decibels) }
+            boostPrefs.edit { putInt(key, decibels) }
+        } else {
+            _boosts.update { it - key }
+            boostPrefs.edit { remove(key) }
+        }
+    }
+
+    private fun readBoosts(): Map<String, Int> {
+        val result = HashMap<String, Int>()
+        for ((key, value) in boostPrefs.all) {
+            if (value is Int && value > 0) result[key] = value
+        }
+        return result
+    }
+
     // The set returned by SharedPreferences must not be modified, hence the copy.
     private fun readFolders(key: String): Set<String> = prefs.getStringSet(key, null)?.toSet().orEmpty()
 
@@ -92,12 +121,15 @@ class Settings(context: Context) {
         return result
     }
 
-    private companion object {
-        const val KEY_MUSIC_FOLDERS = "music_folders"
-        const val KEY_BOOK_FOLDERS = "book_folders"
-        const val KEY_SHUFFLE = "shuffle"
-        const val KEY_REPEAT = "repeat_mode"
-        const val KEY_BOOK_SPEED = "book_speed"
-        const val KEY_SECTION = "section"
+    companion object {
+        /** Where [boosts] keeps the value of the audiobook in [bookFolder], or of music for `null`. */
+        fun boostKey(bookFolder: String?): String = bookFolder ?: "music"
+
+        private const val KEY_MUSIC_FOLDERS = "music_folders"
+        private const val KEY_BOOK_FOLDERS = "book_folders"
+        private const val KEY_SHUFFLE = "shuffle"
+        private const val KEY_REPEAT = "repeat_mode"
+        private const val KEY_BOOK_SPEED = "book_speed"
+        private const val KEY_SECTION = "section"
     }
 }

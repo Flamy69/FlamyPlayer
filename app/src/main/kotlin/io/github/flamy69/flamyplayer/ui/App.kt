@@ -62,6 +62,7 @@ import io.github.flamy69.flamyplayer.R
 import io.github.flamy69.flamyplayer.data.Book
 import io.github.flamy69.flamyplayer.data.MediaLibrary
 import io.github.flamy69.flamyplayer.data.Section
+import io.github.flamy69.flamyplayer.data.Settings
 import io.github.flamy69.flamyplayer.network.SmbServer
 
 @Composable
@@ -147,6 +148,7 @@ fun FlamyPlayerApp(viewModel: MainViewModel) {
             exit = slideOutVertically { it },
         ) {
             BackHandler { nowPlayingOpen = false }
+            val boosts by viewModel.settings.boosts.collectAsStateWithLifecycle()
             NowPlayingScreen(
                 state = playerState,
                 player = viewModel.player,
@@ -154,6 +156,8 @@ fun FlamyPlayerApp(viewModel: MainViewModel) {
                 onToggleShuffle = viewModel::toggleShuffle,
                 onCycleRepeat = viewModel::cycleRepeatMode,
                 onSpeedChange = viewModel::setBookSpeed,
+                boostDb = boosts[Settings.boostKey(playerState.bookFolder)] ?: 0,
+                onBoostChange = { viewModel.settings.setBoost(playerState.bookFolder, it) },
             )
         }
     }
@@ -197,8 +201,9 @@ private fun HomeScreen(
         ServerDialog(
             server = edited,
             initialAddress = newServerAddress.orEmpty(),
-            onSave = { name, address, user, password ->
-                viewModel.video.saveServer(edited, name, address, user, password)
+            templates = servers,
+            onSave = { name, address, user, password, passwordFrom ->
+                viewModel.video.saveServer(edited, name, address, user, password, passwordFrom)
             },
             onRemove = { edited?.let(viewModel.video::removeServer) },
             onDismiss = {
