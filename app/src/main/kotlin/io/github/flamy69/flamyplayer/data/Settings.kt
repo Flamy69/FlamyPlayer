@@ -48,6 +48,16 @@ class Settings(context: Context) {
     /** The ids of the radio stations the listener marked; `null` until the first one is chosen. */
     val radioFavorites: StateFlow<Set<String>?> = _radioFavorites.asStateFlow()
 
+    /**
+     * What was played last, as the playback service names it; lets "play" in the car or on a
+     * headset pick up where the listener left off, even after the app was closed.
+     */
+    var lastPlayed: String?
+        get() = prefs.getString(KEY_LAST_PLAYED, null)
+        set(value) {
+            if (value != lastPlayed) prefs.edit { putString(KEY_LAST_PLAYED, value) }
+        }
+
     var lastSection: Section
         get() = prefs.getString(KEY_SECTION, null).let { name -> Section.entries.firstOrNull { it.name == name } }
             ?: Section.MUSIC
@@ -142,5 +152,6 @@ class Settings(context: Context) {
         private const val KEY_BOOK_SPEED = "book_speed"
         private const val KEY_SECTION = "section"
         private const val KEY_RADIO_FAVORITES = "radio_favorites"
+        private const val KEY_LAST_PLAYED = "last_played"
     }
 }

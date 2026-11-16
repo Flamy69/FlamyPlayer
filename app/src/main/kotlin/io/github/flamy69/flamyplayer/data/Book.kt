@@ -31,4 +31,11 @@ class Book(val folder: String, val tracks: List<Track>) {
         val (index, position) = resumePoint(progress)
         return ((offsets[index] + position).toFloat() / durationMs).coerceIn(0f, 1f)
     }
+
+    companion object {
+        /** One book per folder of [folders], with the tracks of the library that are inside it. */
+        fun inFolders(tracks: List<Track>, folders: Set<String>): List<Book> =
+            folders.map { folder -> Book(folder, FolderSelection.tracksIn(tracks, setOf(folder))) }
+                .sortedWith(compareBy(NaturalOrder) { it.title })
+    }
 }

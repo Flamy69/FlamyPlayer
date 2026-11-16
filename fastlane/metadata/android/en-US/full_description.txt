@@ -27,6 +27,7 @@ RADIO
 • Next and previous on your headset change the station
 
 EVERYWHERE
+• Android Auto: music, audiobooks and radio on the display of your car, by touch or by voice
 • Media notification and lock screen controls, headset and Bluetooth buttons
 • Pauses when headphones are unplugged
 • Light and dark theme, English and Czech

@@ -54,7 +54,11 @@ jobs:
           FLAMY_KEYSTORE_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD }}
           FLAMY_KEY_ALIAS: ${{ secrets.KEY_ALIAS }}
           FLAMY_KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}
-        run: ./gradlew testDebugUnitTest lintDebug assembleRelease bundleRelease
+        # The bundle for Google Play first; then the APK, which additionally offers itself to
+        # the display of a car for video (see app/src/car/AndroidManifest.xml).
+        run: |
+          ./gradlew testDebugUnitTest lintDebug bundleRelease
+          ./gradlew assembleRelease -PcarVideo=true
 
       - name: Name the packages
         run: |

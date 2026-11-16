@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
-<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools">
 
     <uses-permission android:name="android.permission.READ_MEDIA_AUDIO" />
     <uses-permission android:name="android.permission.READ_MEDIA_VIDEO" />
@@ -42,6 +43,12 @@
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
+            <!-- "Play ... on FlamyPlayer", said to the assistant on the phone. In the car the
+                 same wish goes to the playback service directly. -->
+            <intent-filter>
+                <action android:name="android.media.action.MEDIA_PLAY_FROM_SEARCH" />
+                <category android:name="android.intent.category.DEFAULT" />
+            </intent-filter>
         </activity>
 
         <!-- Handles rotation and similar changes itself, so that they never restart the film. -->
@@ -51,14 +58,23 @@
             android:exported="false"
             android:theme="@style/Theme.FlamyPlayer.Video" />
 
-        <!-- Not exported: only the app itself connects to the service. Headset buttons, the
-             notification and the lock screen go through the media session instead. -->
+        <!-- Makes the app one of the media apps of Android Auto: music, audiobooks and radio
+             can be chosen and controlled on the display of the car. -->
+        <meta-data
+            android:name="com.google.android.gms.car.application"
+            android:resource="@xml/automotive_app_desc" />
+
+        <!-- Exported, because Android Auto and the voice assistant are other apps that connect
+             to the service to browse the library and start playback. The service itself decides
+             who gets to see the library: the system, the car and the assistant, nobody else. -->
         <service
             android:name=".playback.PlaybackService"
-            android:exported="false"
-            android:foregroundServiceType="mediaPlayback">
+            android:exported="true"
+            android:foregroundServiceType="mediaPlayback"
+            tools:ignore="ExportedService">
             <intent-filter>
-                <action android:name="androidx.media3.session.MediaSessionService" />
+                <action android:name="androidx.media3.session.MediaLibraryService" />
+                <action android:name="android.media.browse.MediaBrowserService" />
             </intent-filter>
         </service>
     </application>

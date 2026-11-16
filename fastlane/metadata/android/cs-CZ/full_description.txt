@@ -27,6 +27,7 @@ RÁDIO
 • Tlačítka další a předchozí na sluchátkách přepínají stanice
 
 VŠUDE
+• Android Auto: hudba, audioknihy a rádio na displeji auta, dotykem i hlasem
 • Ovládání v oznámení a na zamykací obrazovce, tlačítka na sluchátkách a přes Bluetooth
 • Pozastaví se při odpojení sluchátek
 • Světlý a tmavý vzhled, čeština a angličtina

@@ -24,6 +24,10 @@ fun signingValue(name: String): String? =
 
 val releaseKeystore: String? = signingValue("FLAMY_KEYSTORE_FILE")
 
+// -PcarVideo=true additionally offers the app's own screens, and with them video, to the
+// display of a car (src/car/AndroidManifest.xml says why that is not always on).
+val carVideo: Boolean = providers.gradleProperty("carVideo").orNull.toBoolean()
+
 android {
     namespace = "io.github.flamy69.flamyplayer"
     compileSdk = 37
@@ -39,6 +43,14 @@ android {
         // x86 emulators halves what they add to the download.
         ndk {
             abiFilters += listOf("arm64-v8a", "armeabi-v7a")
+        }
+    }
+
+    if (carVideo) {
+        // Build type manifests are laid over the main one, which keeps that one untouched.
+        sourceSets {
+            getByName("debug").manifest.srcFile("src/car/AndroidManifest.xml")
+            getByName("release").manifest.srcFile("src/car/AndroidManifest.xml")
         }
     }
 

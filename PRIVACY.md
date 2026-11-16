@@ -21,6 +21,7 @@ To do its job the app keeps the following in its own private storage on the devi
 - how often a track came up while shuffling and how much of it you heard the last time
 - your favorite radio stations and your settings (playback speed, volume boost, subtitle style
   and the like)
+- what you played last, so that playback can go on from there
 - the network folders you added: their address, the user name, and the password. The password
   is encrypted with a key held by the Android Keystore of your phone.
 
@@ -46,6 +47,14 @@ phone.
 
 The app contacts no other servers. The list of radio stations is part of the app and is not
 downloaded.
+
+## In the car
+
+When your phone is connected to a car with Android Auto, the app tells Android Auto, which runs
+on your phone, the names of your music, audiobooks and radio stations, so that they can be shown
+on the display of the car, and it plays what you choose there or ask the voice assistant for.
+Android Auto and the assistant are made by Google and governed by Google's privacy policy. Other
+apps on your phone are not told what is in your library.
 
 ## Permissions
 
@@ -102,6 +111,7 @@ Aby aplikace fungovala, ukládá si do svého soukromého úložiště v zaříz
 - kolikrát byla skladba spuštěna při náhodném přehrávání a kolik z ní jste posledně slyšeli
 - oblíbené stanice rádia a nastavení (rychlost přehrávání, zesílení zvuku, vzhled titulků a
   podobně)
+- co jste přehrávali naposledy, aby šlo v poslechu pokračovat
 - síťové složky, které jste přidali: adresu, uživatelské jméno a heslo. Heslo je zašifrované
   klíčem uloženým v úložišti klíčů systému Android ve vašem telefonu.
 
@@ -126,6 +136,14 @@ protože klíč, kterým jsou zašifrovaná, telefon nikdy neopouští.
 
 K žádným jiným serverům se aplikace nepřipojuje. Seznam stanic je součástí aplikace a
 nestahuje se.
+
+## V autě
+
+Když je telefon připojen k autu s Android Auto, sdělí aplikace službě Android Auto, která běží
+ve vašem telefonu, názvy vaší hudby, audioknih a stanic rádia, aby je bylo možné zobrazit na
+displeji auta, a přehraje to, co tam vyberete nebo o co požádáte hlasového asistenta. Android
+Auto a asistenta vytváří Google a řídí se zásadami ochrany soukromí společnosti Google. Jiným
+aplikacím v telefonu aplikace obsah vaší knihovny nesděluje.
 
 ## Oprávnění
 

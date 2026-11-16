@@ -144,6 +144,19 @@ object PlaylistFiles {
         }
     }
 
+    /**
+     * The playlist [files] inside the selected music [folders], matched to [tracks] of the
+     * library. Playlists that name nothing the library has are left out.
+     */
+    fun inFolders(tracks: List<Track>, files: List<PlaylistFile>, folders: Set<String>): List<Playlist> {
+        val wanted = files.filter { FolderSelection.covers(folders, it.folder) }
+        if (wanted.isEmpty()) return emptyList()
+        val matcher = Matcher(tracks)
+        return wanted.map(matcher::resolve)
+            .filter { it.tracks.isNotEmpty() }
+            .sortedWith(compareBy(NaturalOrder) { it.name })
+    }
+
     private const val BYTE_ORDER_MARK = '\uFEFF'
     private val WINDOWS_DRIVE = Regex("^[A-Za-z]:/")
     private val URL = Regex("^[A-Za-z][A-Za-z0-9+.-]*://")

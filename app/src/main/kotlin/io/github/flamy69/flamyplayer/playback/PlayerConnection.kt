@@ -7,6 +7,7 @@ import androidx.compose.ui.graphics.ImageBitmap
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.core.content.ContextCompat
 import androidx.media3.common.C
+import androidx.media3.common.MediaItem
 import androidx.media3.common.Player
 import androidx.media3.session.MediaController
 import androidx.media3.session.SessionToken
@@ -101,6 +102,18 @@ class PlayerConnection(context: Context, private val scope: CoroutineScope) {
         } else {
             c.setMediaItems(listOf(PlaybackQueue.submit(request)), 0, 0L)
         }
+        c.prepare()
+        c.play()
+    }
+
+    /**
+     * Plays what [query] names: a station, a book, a playlist, an artist or a track. The
+     * service looks it up, the same way it does for a wish spoken in the car; an empty query
+     * goes on with what was played last.
+     */
+    fun playFromSearch(query: String) = withController { c ->
+        val wish = MediaItem.RequestMetadata.Builder().setSearchQuery(query).build()
+        c.setMediaItem(MediaItem.Builder().setRequestMetadata(wish).build())
         c.prepare()
         c.play()
     }

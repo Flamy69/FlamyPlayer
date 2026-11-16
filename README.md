@@ -29,6 +29,8 @@ internet is the stream of the radio station you choose to listen to.
   remembered for each audiobook separately (and once for music)
 - Natural file ordering, so `Chapter 2` comes before `Chapter 10`
 - Media notification and lock screen controls with cover art
+- Android Auto: music, audiobooks and radio are chosen and controlled on the display of the
+  car, or asked for by voice
 - Headset and Bluetooth buttons: play, pause, next, previous
 - Pauses when headphones are unplugged and handles audio focus (calls, navigation prompts)
 - Skips files the device cannot decode instead of stopping the playlist
@@ -80,6 +82,12 @@ Requires Android 8.0 or newer.
 
 5. **Radio**: tap a station to listen, tap it again to pause. The star puts a station among
    your favorites at the top of the list.
+
+6. **In the car**: connect the phone to a car with Android Auto and pick FlamyPlayer among its
+   media apps. *Music* offers shuffling everything, your playlists and your folders; a track
+   starts the big playlist from there. *Audiobooks* continue where you stopped, *Radio* shows
+   your favorites first. "Play" with nothing chosen goes on with what you listened to last.
+   Choose the folders on the phone first: the car only shows what the app already has.
 
 In the video player:
 
@@ -150,6 +158,32 @@ The shuffle keeps a small database of how often each track came up and how much 
 heard the last time (shown next to the track as `3× · 87 %`). Choosing the next track is one
 pass over the playlist, so it costs nothing you could notice even with thousands of tracks.
 
+## Android Auto
+
+The playback service is a media library service: besides playing, it hands out the library as
+a tree of things to open and things to play, and Android Auto draws that tree on the display of
+the car in its own, driver-safe way. The app's own screens are not involved, so nothing has to
+be open on the phone. What is said to the assistant ("play Evropa 2", "play Kabát") is looked up
+in the stations, books, playlists and tracks, without regard to accents.
+
+Android Auto and the voice assistant are other apps that connect to the service. They, the
+system and the app itself are the only ones that are told what is in the library; any other app
+that connects sees no more than what is playing.
+
+Android Auto only shows apps installed from Google Play. For an APK from the releases page,
+switch on *Unknown sources* in the developer settings of Android Auto (tap the version number
+in its settings ten times to get them).
+
+### Video in the car
+
+Showing an app's own screens on the display of a parked car, which is what video needs, is
+something Google admits apps to one by one for now; Android Auto supports it on phones with
+Android 15 or newer and closes such an app as soon as the car moves. The declaration that asks
+for it is kept apart in `app/src/car/AndroidManifest.xml` and added with `-PcarVideo=true`. The
+APK of a release is built with it, the app bundle for Google Play without it, because Google
+Play turns down apps that declare it without having been admitted. Until Google opens this up,
+the declaration has no visible effect.
+
 ## Building
 
 Requirements: JDK 17 or newer and the Android SDK (either set `ANDROID_HOME`, or create a
@@ -160,7 +194,9 @@ Requirements: JDK 17 or newer and the Android SDK (either set `ANDROID_HOME`, or
 adb install -r app/build/outputs/apk/release/app-release.apk
 ```
 
-The release build is minified and noticeably smoother than a debug build.
+The release build is minified and noticeably smoother than a debug build. Add `-PcarVideo=true`
+to build the variant that offers itself to the display of a car (see
+[Video in the car](#video-in-the-car)).
 
 ```sh
 ./gradlew testDebugUnitTest      # unit tests
@@ -204,7 +240,7 @@ encoded), `KEYSTORE_PASSWORD`, `KEY_ALIAS` and `KEY_PASSWORD`.
 app/src/main/kotlin/io/github/flamy69/flamyplayer/
 ├── data/        library queries, folder tree, natural ordering, settings, listening history
 ├── network/     SMB and media server (DLNA) clients, device search, data sources for the player
-├── playback/    media session service and the UI's connection to it
+├── playback/    media session service, the library as the car sees it, the UI's connection
 ├── ui/          Jetpack Compose screens
 └── video/       the video player
 ```
@@ -230,6 +266,9 @@ injection framework; the whole app is a few small files.
 
 The app collects nothing and has no server of its own; see the [privacy policy](PRIVACY.md).
 The texts and pictures of its Google Play page are kept in [fastlane/metadata](fastlane/metadata/android).
+
+The playback service is open to other apps, which is what lets Android Auto and the voice
+assistant use it; see [Android Auto](#android-auto) for who is told what.
 
 ## Radio stations
 

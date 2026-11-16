@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Tells Android Auto that this is an app to listen to: it gets a place among the media apps
+     on the display of the car and is browsed there through the playback service. -->
+<automotiveApp>
+    <uses name="media" />
+</automotiveApp>

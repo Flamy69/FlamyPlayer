@@ -17,6 +17,8 @@ class PlayRequest(
     val bookTitle: String? = null,
     /** Radio stations to play instead of [tracks]. */
     val stations: List<RadioStation> = emptyList(),
+    /** Path of the playlist file the tracks come from, if they are not the big playlist. */
+    val playlistPath: String? = null,
 ) {
     /** What the player is given to play. */
     fun mediaItems(): List<MediaItem> =

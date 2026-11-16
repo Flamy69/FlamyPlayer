@@ -14,7 +14,6 @@ import io.github.flamy69.flamyplayer.data.FolderNode
 import io.github.flamy69.flamyplayer.data.FolderSelection
 import io.github.flamy69.flamyplayer.data.FolderTree
 import io.github.flamy69.flamyplayer.data.MediaLibrary
-import io.github.flamy69.flamyplayer.data.NaturalOrder
 import io.github.flamy69.flamyplayer.data.Playlist
 import io.github.flamy69.flamyplayer.data.PlaylistFile
 import io.github.flamy69.flamyplayer.data.PlaylistFiles
@@ -65,10 +64,7 @@ class MainViewModel(app: Application) : AndroidViewModel(app) {
     /** One book per selected audiobook folder. `null` while loading. */
     val books: StateFlow<List<Book>?> =
         combine(library, settings.bookFolders) { tracks, folders ->
-            tracks?.let { loaded ->
-                folders.map { folder -> Book(folder, FolderSelection.tracksIn(loaded, setOf(folder))) }
-                    .sortedWith(compareBy(NaturalOrder) { it.title })
-            }
+            tracks?.let { Book.inFolders(it, folders) }
         }.flowOn(Dispatchers.Default).stateIn(viewModelScope, SharingStarted.Eagerly, null)
 
     /** The playlist files on the device, as they were read. */
@@ -80,15 +76,7 @@ class MainViewModel(app: Application) : AndroidViewModel(app) {
      */
     val playlists: StateFlow<List<Playlist>> =
         combine(library, playlistFiles, settings.musicFolders) { tracks, files, folders ->
-            val wanted = files.filter { FolderSelection.covers(folders, it.folder) }
-            if (tracks == null || wanted.isEmpty()) {
-                emptyList()
-            } else {
-                val matcher = PlaylistFiles.Matcher(tracks)
-                wanted.map(matcher::resolve)
-                    .filter { it.tracks.isNotEmpty() }
-                    .sortedWith(compareBy(NaturalOrder) { it.name })
-            }
+            if (tracks == null) emptyList() else PlaylistFiles.inFolders(tracks, files, folders)
         }.flowOn(Dispatchers.Default).stateIn(viewModelScope, SharingStarted.Eagerly, emptyList())
 
     /** All folders that contain audio, for the folder picker. */
@@ -190,7 +178,7 @@ class MainViewModel(app: Application) : AndroidViewModel(app) {
         }
         settings.setShuffle(shuffle)
         player.play(
-            PlayRequest(tracks, index, 0L),
+            PlayRequest(tracks, index, 0L, playlistPath = playlist.path),
             shuffle = shuffle,
             repeatMode = settings.repeatMode.value,
             speed = 1f,
