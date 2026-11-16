@@ -67,12 +67,12 @@ import io.github.flamy69.flamyplayer.data.Settings
 import io.github.flamy69.flamyplayer.network.SmbServer
 
 @Composable
-fun FlamyPlayerApp(viewModel: MainViewModel, startSection: Section? = null) {
+fun FlamyPlayerApp(viewModel: MainViewModel) {
     val playerState by viewModel.player.state.collectAsStateWithLifecycle()
     val books by viewModel.books.collectAsStateWithLifecycle()
     val bookProgress by viewModel.settings.bookProgress.collectAsStateWithLifecycle()
 
-    var section by rememberSaveable { mutableStateOf(startSection ?: viewModel.settings.lastSection) }
+    var section by rememberSaveable { mutableStateOf(viewModel.settings.lastSection) }
     var pickerSection by rememberSaveable { mutableStateOf<Section?>(null) }
     var openBookFolder by rememberSaveable { mutableStateOf<String?>(null) }
     var nowPlayingOpen by rememberSaveable { mutableStateOf(false) }

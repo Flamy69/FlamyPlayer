@@ -174,15 +174,7 @@ Android Auto only shows apps installed from Google Play. For an APK from the rel
 switch on *Unknown sources* in the developer settings of Android Auto (tap the version number
 in its settings ten times to get them).
 
-### Video in the car
-
-Showing an app's own screens on the display of a parked car, which is what video needs, is
-something Google admits apps to one by one for now; Android Auto supports it on phones with
-Android 15 or newer and closes such an app as soon as the car moves. The declaration that asks
-for it is kept apart in `app/src/car/AndroidManifest.xml` and added with `-PcarVideo=true`. The
-APK of a release is built with it, the app bundle for Google Play without it, because Google
-Play turns down apps that declare it without having been admitted. Until Google opens this up,
-the declaration has no visible effect.
+Video stays on the phone: Android Auto lets media apps be heard, not watched.
 
 ## Building
 
@@ -194,9 +186,7 @@ Requirements: JDK 17 or newer and the Android SDK (either set `ANDROID_HOME`, or
 adb install -r app/build/outputs/apk/release/app-release.apk
 ```
 
-The release build is minified and noticeably smoother than a debug build. Add `-PcarVideo=true`
-to build the variant that offers itself to the display of a car (see
-[Video in the car](#video-in-the-car)).
+The release build is minified and noticeably smoother than a debug build.
 
 ```sh
 ./gradlew testDebugUnitTest      # unit tests
