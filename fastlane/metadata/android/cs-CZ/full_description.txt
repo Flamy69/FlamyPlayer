@@ -1,0 +1,37 @@
+FlamyPlayer je malý a rychlý přehrávač, který pracuje s vašimi složkami místo knihovny, o kterou byste se museli starat. Otevřený zdrojový kód, bez reklam, bez účtů, bez sledování.
+
+HUDBA
+• Vyberete jednu nebo více složek a vše, co obsahují, včetně alb v podsložkách, se stane jedním velkým playlistem
+• Otevře se okamžitě i s tisíci skladeb
+• Náhodné přehrávání, které si pamatuje: nejdřív hraje skladby, které jste ještě neslyšeli, a po doposlouchané skladbě pustí další od stejného autora, nejvýš tři za sebou
+• Soubory playlistů (M3U, M3U8, PLS) mají vlastní seznam a nikdy nezpůsobí, že skladba hraje dvakrát
+• Hledání podle názvu, autora, alba a souboru; opakování všeho nebo jedné skladby
+
+AUDIOKNIHY
+• Každá vybraná složka je jedna kniha, která se přehraje od začátku do konce
+• Pamatuje si, kde jste v každé knize skončili
+• Rychlost přehrávání od 0,75× do 2×, 10 sekund zpět a 30 sekund vpřed
+• Zesílení až o +20 dB pro potichu nahrané knihy, nastavené pro každou knihu zvlášť
+
+VIDEO
+• Přehrává videa z telefonu a přes Wi-Fi ze sdílených složek počítače s Windows nebo NASu (SMB 2/3), bez kopírování
+• Počítače, NASy a servery s médii (DLNA/UPnP) ve vaší síti najde sám
+• Titulky z videa nebo ze souborů SRT, ASS a VTT vedle něj, s nastavitelnou velikostí, barvou a umístěním
+• Zámek otáčení, jas a hlasitost tažením prstu, přeskočení dvojitým ťuknutím, výběr zvukové stopy, pokračování tam, kde jste skončili
+• Zvuk DTS, AC3, E-AC3 a TrueHD a obraz MPEG-2 hrají i na telefonech, které pro ně nemají dekodér
+• DVD zkopírované do síťové složky se přehrává jako filmy, ne jako gigabajtové kousky
+
+RÁDIO
+• Asi 180 českých internetových rádií
+• Oblíbené stanice, hledání a právě hraná skladba, pokud ji stanice posílá
+• Tlačítka další a předchozí na sluchátkách přepínají stanice
+
+VŠUDE
+• Ovládání v oznámení a na zamykací obrazovce, tlačítka na sluchátkách a přes Bluetooth
+• Pozastaví se při odpojení sluchátek
+• Světlý a tmavý vzhled, čeština a angličtina
+
+SOUKROMÍ
+Aplikace nemá vlastní server a nic neshromažďuje. Připojuje se k vaší místní síti, aby našla a přehrála sdílená videa, a k rádiu, které si pustíte. K ničemu jinému.
+
+FlamyPlayer má otevřený zdrojový kód: https://github.com/Flamy69/FlamyPlayer

@@ -226,6 +226,11 @@ injection framework; the whole app is a few small files.
 | `WAKE_LOCK` | Keeping playback going with the screen off |
 | `ACCESS_NETWORK_STATE` | Finding out which Wi-Fi network the phone is on, to look for shared folders there |
 
+## Privacy
+
+The app collects nothing and has no server of its own; see the [privacy policy](PRIVACY.md).
+The texts and pictures of its Google Play page are kept in [fastlane/metadata](fastlane/metadata/android).
+
 ## Radio stations
 
 The list of stations comes from [radio-browser.info](https://www.radio-browser.info), a community

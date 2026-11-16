@@ -1,0 +1,37 @@
+FlamyPlayer is a small, fast media player that works with your folders instead of a library you have to maintain. Open source, no ads, no accounts, no tracking.
+
+MUSIC
+• Pick one or more folders; everything inside them, albums in subfolders included, becomes one big playlist
+• Opens instantly even with thousands of tracks
+• Shuffle that remembers: tracks you have not heard yet come first, and a track you listened to the end is followed by another one of the same artist, three in a row at most
+• Playlist files (M3U, M3U8, PLS) get a list of their own and never put a track into the shuffle twice
+• Search by title, artist, album and file name; repeat all or one
+
+AUDIOBOOKS
+• Every folder you pick is one book, played from start to finish
+• Remembers where you stopped in each book
+• Playback speed from 0.75× to 2×, 10 seconds back and 30 seconds forward
+• Volume boost of up to +20 dB for quiet recordings, set for each book separately
+
+VIDEO
+• Plays the videos on your phone and, over Wi-Fi, from shared folders of a Windows PC or a NAS (SMB 2/3) without copying them
+• Finds computers, NAS devices and media servers (DLNA/UPnP) on your network by itself
+• Subtitles from the video file or from SRT, ASS and VTT files next to it, with adjustable size, color and position
+• Rotation lock, brightness and volume by swiping, double tap to skip, choice of audio track, resume where you stopped
+• DTS, AC3, E-AC3 and TrueHD sound and MPEG-2 video play even on phones without a decoder for them
+• A DVD copied to a network folder plays as films, not as one gigabyte pieces
+
+RADIO
+• About 180 Czech internet radio stations
+• Favorites, search and the song that is on air where the station tells
+• Next and previous on your headset change the station
+
+EVERYWHERE
+• Media notification and lock screen controls, headset and Bluetooth buttons
+• Pauses when headphones are unplugged
+• Light and dark theme, English and Czech
+
+PRIVACY
+The app has no server of its own and collects nothing. It talks to your local network to find and play shared videos, and to the radio station you choose to listen to. Nothing else.
+
+FlamyPlayer is open source: https://github.com/Flamy69/FlamyPlayer
