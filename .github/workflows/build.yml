@@ -1,7 +1,8 @@
 name: Build
 
-# Every push to main is tested and built; the APK is attached to the workflow run.
-# Pushing a tag like v1.2.3 additionally publishes the APK as a GitHub release.
+# Every push to main is tested and built; the APK (for installing) and the app bundle (for
+# Google Play) are attached to the workflow run.
+# Pushing a tag like v1.2.3 additionally publishes both as a GitHub release.
 
 on:
   push:
@@ -30,9 +31,9 @@ jobs:
           if [[ "$GITHUB_REF" == refs/tags/v* ]]; then
             version="${GITHUB_REF_NAME#v}"
             echo "ORG_GRADLE_PROJECT_appVersion=$version" >> "$GITHUB_ENV"
-            echo "APK_NAME=FlamyPlayer-$version.apk" >> "$GITHUB_ENV"
+            echo "PACKAGE_NAME=FlamyPlayer-$version" >> "$GITHUB_ENV"
           else
-            echo "APK_NAME=FlamyPlayer-${GITHUB_SHA::7}.apk" >> "$GITHUB_ENV"
+            echo "PACKAGE_NAME=FlamyPlayer-${GITHUB_SHA::7}" >> "$GITHUB_ENV"
           fi
 
       # The signing key lives in repository secrets. Without it (forks, pull requests) the
@@ -53,15 +54,19 @@ jobs:
           FLAMY_KEYSTORE_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD }}
           FLAMY_KEY_ALIAS: ${{ secrets.KEY_ALIAS }}
           FLAMY_KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}
-        run: ./gradlew testDebugUnitTest lintDebug assembleRelease
+        run: ./gradlew testDebugUnitTest lintDebug assembleRelease bundleRelease
 
-      - name: Name the APK
-        run: cp app/build/outputs/apk/release/app-release.apk "$APK_NAME"
+      - name: Name the packages
+        run: |
+          cp app/build/outputs/apk/release/app-release.apk "$PACKAGE_NAME.apk"
+          cp app/build/outputs/bundle/release/app-release.aab "$PACKAGE_NAME.aab"
 
       - uses: actions/upload-artifact@v7
         with:
           name: FlamyPlayer-apk
-          path: FlamyPlayer-*.apk
+          path: |
+            FlamyPlayer-*.apk
+            FlamyPlayer-*.aab
           if-no-files-found: error
 
   release:
@@ -79,7 +84,7 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
         run: >
-          gh release create "$GITHUB_REF_NAME" FlamyPlayer-*.apk
+          gh release create "$GITHUB_REF_NAME" FlamyPlayer-*.apk FlamyPlayer-*.aab
           --repo "$GITHUB_REPOSITORY"
           --title "FlamyPlayer ${GITHUB_REF_NAME#v}"
           --generate-notes

@@ -57,6 +57,9 @@ Grab the APK of the [latest release](https://github.com/Flamy69/FlamyPlayer/rele
 open it on your phone. Android will ask you to allow installing apps from your browser or file
 manager the first time. Newer releases install over older ones and keep your settings.
 
+The `.aab` file next to it is the same app packaged for Google Play; it cannot be installed
+directly.
+
 Requires Android 8.0 or newer.
 
 ## Using it
@@ -183,7 +186,8 @@ The same four names work as environment variables, which is how the CI build get
 ### Releases
 
 Every push to `main` is tested and built by [GitHub Actions](.github/workflows/build.yml), and the
-APK is attached to the workflow run. Pushing a version tag publishes it as a release:
+APK and the app bundle for Google Play (`.aab`) are attached to the workflow run. Pushing a
+version tag publishes both as a release:
 
 ```sh
 git tag v1.2.3
