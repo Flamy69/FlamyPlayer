@@ -21,3 +21,6 @@ keystore.properties
 # OS
 .DS_Store
 Thumbs.db
+
+# Raw screenshots from the phone; the prepared ones are in phoneScreenshots/
+fastlane/metadata/android/*/images/Screenshot_*
