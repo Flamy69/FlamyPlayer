@@ -173,6 +173,7 @@ internal class MjpegOutputBuffer(owner: DecoderOutputBuffer.Owner<VideoDecoderOu
     }
 }
 
+@OptIn(UnstableApi::class)
 internal class MjpegDecoderException : DecoderException {
     constructor(message: String) : super(message)
     constructor(message: String, cause: Throwable) : super(message, cause)
