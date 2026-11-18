@@ -125,6 +125,8 @@ decoded by the phone. H.264 plays everywhere; H.265, VP9 and AV1 on any reasonab
 Sound in DTS, DTS-HD, AC3, E-AC3, TrueHD or MP2, which most phones cannot decode, is decoded by
 FFmpeg. So is the picture if the phone has no decoder for it (MPEG-2, or H.265 and AV1 on older
 phones); that runs on the processor and costs more battery than the phone's own decoders.
+MJPEG, a film made of JPEG pictures (AVI, or a raw `.mjpg` / `.mjpeg` file), is drawn by the
+JPEG decoder built into Android.
 Subtitles inside the file (text or picture based) and separate `.srt`, `.ass`, `.ssa` and
 `.vtt` files are supported.
 

@@ -18,7 +18,7 @@ VIDEO
 • Finds computers, NAS devices and media servers (DLNA/UPnP) on your network by itself
 • Subtitles from the video file or from SRT, ASS and VTT files next to it, with adjustable size, color and position
 • Rotation lock, brightness and volume by swiping, double tap to skip, choice of audio track, resume where you stopped
-• DTS, AC3, E-AC3 and TrueHD sound and MPEG-2 video play even on phones without a decoder for them
+• DTS, AC3, E-AC3 and TrueHD sound, and MPEG-2 and MJPEG video, play even on phones without a decoder for them
 • A DVD copied to a network folder plays as films, not as one gigabyte pieces
 
 RADIO

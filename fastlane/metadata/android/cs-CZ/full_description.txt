@@ -18,7 +18,7 @@ VIDEO
 • Počítače, NASy a servery s médii (DLNA/UPnP) ve vaší síti najde sám
 • Titulky z videa nebo ze souborů SRT, ASS a VTT vedle něj, s nastavitelnou velikostí, barvou a umístěním
 • Zámek otáčení, jas a hlasitost tažením prstu, přeskočení dvojitým ťuknutím, výběr zvukové stopy, pokračování tam, kde jste skončili
-• Zvuk DTS, AC3, E-AC3 a TrueHD a obraz MPEG-2 hrají i na telefonech, které pro ně nemají dekodér
+• Zvuk DTS, AC3, E-AC3 a TrueHD a obraz MPEG-2 a MJPEG hrají i na telefonech, které pro ně nemají dekodér
 • DVD zkopírované do síťové složky se přehrává jako filmy, ne jako gigabajtové kousky
 
 RÁDIO

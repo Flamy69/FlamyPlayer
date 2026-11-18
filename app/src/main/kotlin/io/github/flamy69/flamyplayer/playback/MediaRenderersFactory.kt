@@ -17,7 +17,8 @@ import io.github.anilbeesetti.nextlib.media3ext.ffdecoder.FfmpegVideoRenderer
 /**
  * Decodes with what the phone has built in and, for everything it lacks, with the FFmpeg
  * decoders that come with the app: DTS, AC3, E-AC3, TrueHD, MP2 and ALAC sound, and MPEG-2,
- * H.264, H.265, VP8, VP9 and AV1 pictures.
+ * H.264, H.265, VP8, VP9 and AV1 pictures. MJPEG is a sequence of JPEG pictures; that FFmpeg
+ * build has no MJPEG decoder, so those pictures go to the JPEG decoder built into Android.
  *
  * The phone's own decoders come first in the list, so they are used whenever they can play a
  * track: they run on dedicated hardware and are easy on the battery. FFmpeg does its work on
@@ -62,6 +63,7 @@ class MediaRenderersFactory(context: Context) : DefaultRenderersFactory(context)
             context, extensionRendererMode, mediaCodecSelector, enableDecoderFallback, eventHandler, eventListener,
             allowedVideoJoiningTimeMs, out,
         )
+        out.add(MjpegRenderer(allowedVideoJoiningTimeMs, eventHandler, eventListener, MAX_DROPPED_FRAMES_TO_NOTIFY))
         if (isFfmpegAvailable) {
             out.add(FfmpegVideoRenderer(allowedVideoJoiningTimeMs, eventHandler, eventListener, MAX_DROPPED_FRAMES_TO_NOTIFY))
         }

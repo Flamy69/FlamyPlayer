@@ -15,6 +15,8 @@ class MediaFilesTest {
     fun recognizesVideosByExtension() {
         assertTrue(VideoFiles.isVideo("Film.mkv"))
         assertTrue(VideoFiles.isVideo("holiday.MP4"))
+        assertTrue(VideoFiles.isVideo("camera.MJPG"))
+        assertTrue(VideoFiles.isVideo("clip.mjpeg"))
         assertFalse(VideoFiles.isVideo("Film.srt"))
         assertFalse(VideoFiles.isVideo("mkv"))
         assertFalse(VideoFiles.isVideo("notes"))

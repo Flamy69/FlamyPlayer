@@ -33,6 +33,7 @@ import io.github.flamy69.flamyplayer.network.NetworkDataSource
 import io.github.flamy69.flamyplayer.network.SmbDataSource
 import io.github.flamy69.flamyplayer.network.SmbException
 import io.github.flamy69.flamyplayer.playback.MediaRenderersFactory
+import io.github.flamy69.flamyplayer.playback.mjpegAwareExtractors
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
@@ -112,11 +113,13 @@ class VideoPlayerViewModel(app: Application) : AndroidViewModel(app) {
                         ),
                     ),
                 ),
-                DefaultExtractorsFactory()
-                    // DTS sound in Blu-ray style files (.m2ts) is not looked for otherwise.
-                    .setTsExtractorFlags(DefaultTsPayloadReaderFactory.FLAG_ENABLE_HDMV_DTS_AUDIO_STREAMS)
-                    // Lets files without a seek table be seeked in all the same.
-                    .setConstantBitrateSeekingEnabled(true),
+                mjpegAwareExtractors(
+                    DefaultExtractorsFactory()
+                        // DTS sound in Blu-ray style files (.m2ts) is not looked for otherwise.
+                        .setTsExtractorFlags(DefaultTsPayloadReaderFactory.FLAG_ENABLE_HDMV_DTS_AUDIO_STREAMS)
+                        // Lets files without a seek table be seeked in all the same.
+                        .setConstantBitrateSeekingEnabled(true),
+                ),
             ),
         )
         .setAudioAttributes(
@@ -516,6 +519,7 @@ class VideoPlayerViewModel(app: Application) : AndroidViewModel(app) {
             "video/x-vnd.on2.vp8" -> "VP8"
             "video/av01" -> "AV1"
             "video/mp4v-es" -> "MPEG-4"
+            "video/mjpeg" -> "MJPEG"
             "video/mpeg2" -> "MPEG-2"
             "video/wvc1" -> "VC-1"
             else -> mimeType.substringAfter('/').uppercase()
